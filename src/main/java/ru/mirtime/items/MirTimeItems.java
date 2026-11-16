@@ -172,14 +172,38 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
         Player p = e.getPlayer();
         String prefix = color(getConfig().getString("prefix", "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "));
 
-        List<String> blocked = getConfig().getStringList("blocked-worlds");
-        for (String w : blocked) {
-            if (p.getWorld().getName().equalsIgnoreCase(w)) {
-                p.sendMessage(prefix + color("&cЭтот предмет запрещено использовать в данном мире!"));
-                p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-                return;
-            }
+        String mode = getConfig().getString(type + ".world-mode", "BLOCKED").toUpperCase();
+        List<String> worldList = getConfig().getStringList(type + ".worlds");
+        String currentWorld = p.getWorld().getName();
+        boolean inList = worldList.stream().anyMatch(w -> w.equalsIgnoreCase(currentWorld));
+
+        boolean denied = mode.equals("ALLOWED") ? !inList : inList;
+        if (denied) {
+            p.sendMessage(prefix + color("&cЭтот предмет нельзя использовать в мире &e" + currentWorld + "&c!"));
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            return;
         }
+
+        String cdKey = p.getUniqueId() + ":" + type;
+        long now = System.currentTimeMillis();
+        long cdEnd = cooldowns.getOrDefault(cdKey, 0L);
+        if (now < cdEnd) {
+            long rem = (cdEnd - now) / 1000 + 1;
+            p.sendMessage(prefix + color("&cПодождите ещё &#00E5FF" + rem + " сек. &cперед повторным использованием!"));
+            return;
+        }
+
+        int cdSec = getConfig().getInt(type + ".cooldown-seconds", 30);
+        cooldowns.put(cdKey, now + cdSec * 1000L);
+        is.setAmount(is.getAmount() - 1);
+
+        switch (type) {
+            case "trapka" -> activateTrapka(p);
+            case "cataclysm" -> activateCataclysm(p);
+            case "totem" -> activateTotem(p, e.getClickedBlock() != null ? e.getClickedBlock().getLocation().add(0.5, 1.0, 0.5) : p.getLocation());
+        }
+    }
+
 
         String cdKey = p.getUniqueId() + ":" + type;
         long now = System.currentTimeMillis();
