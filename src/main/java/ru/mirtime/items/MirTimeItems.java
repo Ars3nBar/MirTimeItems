@@ -204,27 +204,6 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
         }
     }
 
-
-        String cdKey = p.getUniqueId() + ":" + type;
-        long now = System.currentTimeMillis();
-        long cdEnd = cooldowns.getOrDefault(cdKey, 0L);
-        if (now < cdEnd) {
-            long rem = (cdEnd - now) / 1000 + 1;
-            p.sendMessage(prefix + color("&cПодождите ещё &#00E5FF" + rem + " сек. &cперед повторным использованием!"));
-            return;
-        }
-
-        int cdSec = getConfig().getInt(type + ".cooldown-seconds", 30);
-        cooldowns.put(cdKey, now + cdSec * 1000L);
-        is.setAmount(is.getAmount() - 1);
-
-        switch (type) {
-            case "trapka" -> activateTrapka(p);
-            case "cataclysm" -> activateCataclysm(p);
-            case "totem" -> activateTotem(p, e.getClickedBlock() != null ? e.getClickedBlock().getLocation().add(0.5, 1.0, 0.5) : p.getLocation());
-        }
-    }
-
     private void activateTrapka(Player p) {
         Location center = p.getLocation().getBlock().getLocation();
         Material mat = Material.matchMaterial(getConfig().getString("trapka.material", "OBSIDIAN"));
