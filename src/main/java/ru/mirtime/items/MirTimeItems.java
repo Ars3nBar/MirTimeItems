@@ -181,6 +181,21 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
         if (denied) {
             p.sendMessage(prefix + color("&cЭтот предмет нельзя использовать в мире &e" + currentWorld + "&c!"));
             p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            p.updateInventory();
+            return;
+        }
+
+        if (type.equals("totem") && p.getWorld().getDifficulty() == Difficulty.PEACEFUL) {
+            p.sendMessage(prefix + color("&cВ этом мире включена мирная сложность — призыв босса невозможен!"));
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            p.updateInventory();
+            return;
+        }
+
+        if (isProtectedRegion(p.getLocation())) {
+            p.sendMessage(prefix + color("&cЭтот предмет запрещено использовать на спавне и в безопасных регионах!"));
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            p.updateInventory();
             return;
         }
 
@@ -190,17 +205,56 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
         if (now < cdEnd) {
             long rem = (cdEnd - now) / 1000 + 1;
             p.sendMessage(prefix + color("&cПодождите ещё &#00E5FF" + rem + " сек. &cперед повторным использованием!"));
+            p.updateInventory();
             return;
         }
 
         int cdSec = getConfig().getInt(type + ".cooldown-seconds", 30);
         cooldowns.put(cdKey, now + cdSec * 1000L);
         is.setAmount(is.getAmount() - 1);
+        p.updateInventory();
 
         switch (type) {
             case "trapka" -> activateTrapka(p);
             case "cataclysm" -> activateCataclysm(p);
             case "totem" -> activateTotem(p, e.getClickedBlock() != null ? e.getClickedBlock().getLocation().add(0.5, 1.0, 0.5) : p.getLocation());
+        }
+    }
+
+    private boolean isProtectedRegion(Location loc) {
+        try {
+            if (!Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) return false;
+            Class<?> wgClass = Class.forName("com.sk89q.worldguard.WorldGuard");
+            Object wg = wgClass.getMethod("getInstance").invoke(null);
+            Object platform = wgClass.getMethod("getPlatform").invoke(wg);
+            Object container = platform.getClass().getMethod("getRegionContainer").invoke(platform);
+            Object query = container.getClass().getMethod("createQuery").invoke(container);
+
+            Class<?> bukkitAdapter = Class.forName("com.sk89q.worldedit.bukkit.BukkitAdapter");
+            Object weLoc = bukkitAdapter.getMethod("adapt", Location.class).invoke(null, loc);
+
+            Class<?> flagsClass = Class.forName("com.sk89q.worldguard.protection.flags.Flags");
+            Object pvpFlag = flagsClass.getField("PVP").get(null);
+            Object mobFlag = flagsClass.getField("MOB_SPAWNING").get(null);
+
+            Class<?> stateFlagArray = Class.forName("[Lcom.sk89q.worldguard.protection.flags.StateFlag;");
+            Object array = java.lang.reflect.Array.newInstance(Class.forName("com.sk89q.worldguard.protection.flags.StateFlag"), 1);
+
+            java.lang.reflect.Array.set(array, 0, pvpFlag);
+            boolean pvpAllowed = (boolean) query.getClass().getMethod("testState",
+                    Class.forName("com.sk89q.worldedit.util.Location"),
+                    Class.forName("com.sk89q.worldguard.protection.association.RegionAssociable"),
+                    stateFlagArray).invoke(query, weLoc, null, array);
+
+            java.lang.reflect.Array.set(array, 0, mobFlag);
+            boolean mobAllowed = (boolean) query.getClass().getMethod("testState",
+                    Class.forName("com.sk89q.worldedit.util.Location"),
+                    Class.forName("com.sk89q.worldguard.protection.association.RegionAssociable"),
+                    stateFlagArray).invoke(query, weLoc, null, array);
+
+            return !pvpAllowed || !mobAllowed;
+        } catch (Exception ignored) {
+            return false;
         }
     }
 
