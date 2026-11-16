@@ -8,20 +8,31 @@
 
 prefix: "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "
 
-# Миры, в которых запрещено использовать кастомные предметы
-blocked-worlds:
-  - "spawn"
-  - "darena"
+# Режимы проверки миров для каждого предмета (world-mode):
+# BLOCKED - запретить предмет в мирах из списка worlds (во всех остальных разрешено)
+# ALLOWED - разрешить предмет ТОЛЬКО в мирах из списка worlds
 
 trapka:
   cooldown-seconds: 30
   duration-seconds: 18
   material: "OBSIDIAN"
+  world-mode: "BLOCKED"
+  worlds:
+    - "game"
+    - "game_nether"
+    - "game_the_end"
+    - "world"
+    - "world_nether"
+    - "world_the_end"
 
 cataclysm:
   cooldown-seconds: 40
   radius: 10.0
   explosion-power: 7.5
+  world-mode: "BLOCKED"
+  worlds:
+    - "spawn"
+    - "darena"
 
 totem:
   cooldown-seconds: 60
@@ -29,6 +40,10 @@ totem:
   fight-seconds: 60
   boss-name: "&#0055ff&l☠ &#00E5FF&lПОРОЖДЕНИЕ БЕЗДНЫ &#0055ff&l☠"
   boss-health: 800.0
+  world-mode: "BLOCKED"
+  worlds:
+    - "spawn"
+    - "darena"
   rewards:
     - "eco give %player% 50000"
     - "p give %player% 500"
