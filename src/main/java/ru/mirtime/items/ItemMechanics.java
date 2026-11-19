@@ -48,7 +48,7 @@ public class ItemMechanics implements Listener {
         long now = System.currentTimeMillis();
         long end = cooldowns.getOrDefault(key, 0L);
         if (now < end) {
-            p.sendMessage(MirTimeItems.color(plugin.getPrefix() + "&cПерезарядка: ещё &#00E5FF" + ((end - now) / 1000 + 1) + " сек.&c!"));
+            p.sendMessage(MirTimeItems.color(plugin.getPrefix() + "&cПерезарядка артефакта: ещё &#00E5FF" + ((end - now) / 1000 + 1) + " сек.&c!"));
             return false;
         }
         cooldowns.put(key, now + sec * 1000L);
@@ -61,14 +61,21 @@ public class ItemMechanics implements Listener {
             public void run() {
                 for (Player p : Bukkit.getOnlinePlayers()) {
                     String off = getItemId(p.getInventory().getItemInOffHand());
-                    if ("talisman_rage".equals(off)) p.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 45, 1, true, false));
+                    if ("talisman_rage".equals(off)) {
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 45, 1, true, false));
+                        p.getWorld().spawnParticle(Particle.CRIMSON_SPORE, p.getLocation().add(0, 1, 0), 4, 0.3, 0.4, 0.3, 0.01);
+                    }
                     if ("talisman_speed".equals(off)) {
                         p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 45, 1, true, false));
                         p.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 45, 1, true, false));
+                        p.getWorld().spawnParticle(Particle.CLOUD, p.getLocation(), 3, 0.2, 0.1, 0.2, 0.01);
                     }
 
                     String boots = getItemId(p.getInventory().getBoots());
-                    if ("hermes_boots".equals(boots)) p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 45, 1, true, false));
+                    if ("hermes_boots".equals(boots)) {
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 45, 1, true, false));
+                        p.getWorld().spawnParticle(Particle.END_ROD, p.getLocation().add(0, 0.1, 0), 2, 0.2, 0.05, 0.2, 0.01);
+                    }
 
                     String chest = getItemId(p.getInventory().getChestplate());
                     if ("titan_chest".equals(chest)) {
@@ -91,8 +98,10 @@ public class ItemMechanics implements Listener {
 
         if (id.equals("obsidian_breaker") && e.getAction() == Action.LEFT_CLICK_BLOCK && e.getClickedBlock() != null) {
             if (e.getClickedBlock().getType() == Material.OBSIDIAN && !plugin.isBlocked(p.getLocation())) {
+                Location bLoc = e.getClickedBlock().getLocation().add(0.5, 0.5, 0.5);
                 e.getClickedBlock().breakNaturally();
-                p.playSound(p.getLocation(), Sound.BLOCK_STONE_BREAK, 1f, 0.8f);
+                bLoc.getWorld().spawnParticle(Particle.LAVA, bLoc, 15, 0.3, 0.3, 0.3, 0.1);
+                p.playSound(bLoc, Sound.ENTITY_GENERIC_EXPLODE, 0.6f, 1.4f);
                 if (is.getItemMeta() instanceof Damageable dmg) {
                     dmg.setDamage(dmg.getDamage() + 1);
                     is.setItemMeta(dmg);
@@ -101,7 +110,6 @@ public class ItemMechanics implements Listener {
             }
             return;
         }
-
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (Set.of("vampire_blade", "thor_axe", "midas_sword", "soul_reaper", "snipe_bow", "drill_pickaxe", "magnet_pickaxe", "spawner_silk", "farmer_hoe", "hermes_boots", "titan_chest", "dragon_elytra", "talisman_rage", "talisman_speed", "talisman_wealth").contains(id)) return;
 
@@ -112,46 +120,53 @@ public class ItemMechanics implements Listener {
             p.updateInventory();
             return;
         }
+
         switch (id) {
             case "trapka" -> { if (checkCooldown(p, id, 30)) { consumeOne(p, is); buildCube(p, Material.OBSIDIAN, 2, 18); } }
             case "mega_trap" -> { if (checkCooldown(p, id, 45)) { consumeOne(p, is); buildCube(p, Material.CRYING_OBSIDIAN, 3, 25); } }
             case "cataclysm" -> { if (checkCooldown(p, id, 40)) { consumeOne(p, is); runCataclysm(p); } }
             case "frost_staff" -> {
                 if (checkCooldown(p, id, 25)) {
-                    p.getWorld().playSound(p.getLocation(), Sound.BLOCK_GLASS_BREAK, 1.2f, 0.5f);
-                    p.getWorld().spawnParticle(Particle.SNOWFLAKE, p.getLocation().add(0, 1, 0), 100, 4, 1, 4, 0.1);
-                    for (Entity ent : p.getNearbyEntities(8, 8, 8)) {
+                    p.getWorld().playSound(p.getLocation(), Sound.ENTITY_PLAYER_HURT_FREEZE, 1.4f, 0.7f);
+                    p.getWorld().spawnParticle(Particle.SNOWFLAKE, p.getLocation().add(0, 1, 0), 180, 4.5, 1.2, 4.5, 0.15);
+                    for (Entity ent : p.getNearbyEntities(9, 9, 9)) {
                         if (ent instanceof LivingEntity le) {
-                            le.setFreezeTicks(140);
-                            le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 3));
+                            le.setFreezeTicks(160);
+                            le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 4));
+                            le.getWorld().spawnParticle(Particle.ITEM_SNOWBALL, le.getLocation().add(0, 1, 0), 30, 0.4, 0.6, 0.4, 0.1);
                         }
                     }
-                    p.sendMessage(MirTimeItems.color(plugin.getPrefix() + "&#00E5FFВраги вокруг заморожены!"));
+                    p.sendMessage(MirTimeItems.color(plugin.getPrefix() + "&#00E5FF&lЛедяной шторм! &fВраги вокруг вморожены в лёд!"));
                 }
             }
             case "gravity_mace" -> {
                 if (checkCooldown(p, id, 20)) {
-                    p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WIND_CHARGE_WIND_BURST, 1.2f, 0.7f);
+                    p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WIND_CHARGE_WIND_BURST, 1.5f, 0.6f);
+                    p.getWorld().spawnParticle(Particle.SONIC_BOOM, p.getLocation().add(0, 1, 0), 5, 2, 0.5, 2, 0);
                     for (Entity ent : p.getNearbyEntities(8, 8, 8)) {
-                        if (ent instanceof LivingEntity) ent.setVelocity(new Vector(0, 1.45, 0));
+                        if (ent instanceof LivingEntity) ent.setVelocity(new Vector(0, 1.6, 0));
                     }
                 }
             }
             case "flash_pearl" -> {
                 if (checkCooldown(p, id, 15)) {
                     consumeOne(p, is);
+                    p.getWorld().spawnParticle(Particle.REVERSE_PORTAL, p.getLocation().add(0, 1, 0), 60, 0.5, 0.8, 0.5, 0.1);
                     Block target = p.getTargetBlockExact(35);
                     Location dest = target != null ? target.getLocation().add(0.5, 1.0, 0.5) : p.getLocation().add(p.getLocation().getDirection().multiply(25));
                     dest.setYaw(p.getLocation().getYaw());
                     dest.setPitch(p.getLocation().getPitch());
                     p.teleport(dest);
-                    p.playSound(dest, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1.2f);
+                    dest.getWorld().spawnParticle(Particle.PORTAL, dest.clone().add(0, 1, 0), 80, 0.5, 0.8, 0.5, 0.2);
+                    p.playSound(dest, Sound.ENTITY_ENDERMAN_TELEPORT, 1.2f, 1.3f);
                 }
             }
             case "disorient" -> {
                 if (checkCooldown(p, id, 30)) {
                     consumeOne(p, is);
-                    p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1f, 0.8f);
+                    p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.4f, 0.8f);
+                    p.getWorld().spawnParticle(Particle.FLASH, p.getLocation().add(0, 1.5, 0), 3);
+                    p.getWorld().spawnParticle(Particle.WITCH, p.getLocation().add(0, 1, 0), 120, 4, 1, 4, 0.1);
                     for (Entity ent : p.getNearbyEntities(10, 10, 10)) {
                         if (ent instanceof Player target) {
                             target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 120, 1));
@@ -166,17 +181,19 @@ public class ItemMechanics implements Listener {
                     consumeOne(p, is);
                     p.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 100, 3));
                     p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 2));
-                    p.playSound(p.getLocation(), Sound.ITEM_TOTEM_USE, 0.8f, 1.4f);
+                    p.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, p.getLocation().add(0, 1, 0), 90, 0.8, 1, 0.8, 0.3);
+                    p.playSound(p.getLocation(), Sound.ITEM_TOTEM_USE, 0.9f, 1.3f);
                 }
             }
             case "web_bomb" -> {
                 if (checkCooldown(p, id, 25)) {
                     consumeOne(p, is);
-                    for (Entity ent : p.getNearbyEntities(8, 8, 8)) {
+                    for (Entity ent : p.getNearbyEntities(9, 9, 9)) {
                         if (ent instanceof Player target) {
                             Location c = target.getLocation().getBlock().getLocation();
-                            for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++)
-                                if (c.clone().add(x, 0, z).getBlock().getType().isAir()) c.clone().add(x, 0, z).getBlock().setType(Material.COBWEB);
+                            for (int x = -1; x <= 1; x++) for (int y = 0; y <= 1; y++) for (int z = -1; z <= 1; z++)
+                                if (c.clone().add(x, y, z).getBlock().getType().isAir()) c.clone().add(x, y, z).getBlock().setType(Material.COBWEB);
+                            target.getWorld().playSound(c, Sound.ENTITY_SPIDER_AMBIENT, 1.3f, 0.7f);
                             break;
                         }
                     }
@@ -185,10 +202,11 @@ public class ItemMechanics implements Listener {
             case "escape_feather" -> {
                 if (checkCooldown(p, id, 20)) {
                     consumeOne(p, is);
-                    Vector dir = p.getLocation().getDirection().multiply(1.8).setY(0.95);
+                    Vector dir = p.getLocation().getDirection().multiply(1.9).setY(1.05);
                     p.setVelocity(dir);
-                    p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 100, 0));
-                    p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1f, 1.2f);
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 110, 0));
+                    p.getWorld().spawnParticle(Particle.FLAME, p.getLocation(), 80, 0.5, 0.3, 0.5, 0.15);
+                    p.playSound(p.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1.2f, 1.1f);
                 }
             }
             case "cleanse_totem" -> {
@@ -196,13 +214,16 @@ public class ItemMechanics implements Listener {
                     consumeOne(p, is);
                     p.getActivePotionEffects().forEach(ef -> p.removePotionEffect(ef.getType()));
                     p.setFireTicks(0);
-                    p.setHealth(Math.min(20.0, p.getHealth() + 8.0));
+                    double max = p.getAttribute(Attribute.MAX_HEALTH) != null ? p.getAttribute(Attribute.MAX_HEALTH).getBaseValue() : 20.0;
+                    p.setHealth(Math.min(max, p.getHealth() + 10.0));
+                    p.getWorld().spawnParticle(Particle.HEART, p.getLocation().add(0, 1.5, 0), 15, 0.6, 0.5, 0.6, 0.1);
                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.5f);
                 }
             }
             case "warden_horn" -> {
                 if (checkCooldown(p, id, 60)) {
                     consumeOne(p, is);
+                    p.getWorld().playSound(p.getLocation(), Sound.EVENT_RAID_HORN, 2.0f, 0.7f);
                     Ravager rav = (Ravager) p.getWorld().spawnEntity(p.getLocation(), EntityType.RAVAGER);
                     rav.setCustomName(MirTimeItems.color("&3&lЗверь Бездны (" + p.getName() + ")"));
                     rav.setCustomNameVisible(true);
@@ -213,10 +234,11 @@ public class ItemMechanics implements Listener {
                 if (checkCooldown(p, id, 60)) {
                     consumeOne(p, is);
                     Location dropLoc = p.getLocation().add(0, 1, 0);
-                    p.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.DIAMOND, 8));
-                    p.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.GOLDEN_APPLE, 4));
-                    p.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.EXPERIENCE_BOTTLE, 16));
-                    p.playSound(dropLoc, Sound.ENTITY_FIREWORK_ROCKET_TWINKLE, 1f, 1f);
+                    p.getWorld().spawnParticle(Particle.FIREWORK, dropLoc.clone().add(0, 2, 0), 70, 0.6, 1, 0.6, 0.15);
+                    p.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.DIAMOND, 10));
+                    p.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.GOLDEN_APPLE, 5));
+                    p.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.EXPERIENCE_BOTTLE, 24));
+                    p.playSound(dropLoc, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1.2f, 1f);
                 }
             }
             case "totem" -> { if (checkCooldown(p, id, 60)) { consumeOne(p, is); runTotemRitual(p.getLocation()); } }
@@ -234,15 +256,18 @@ public class ItemMechanics implements Listener {
         if (id == null) return;
 
         if (id.equals("vampire_blade")) {
-            double heal = e.getFinalDamage() * 0.25;
+            double heal = e.getFinalDamage() * 0.30;
             double max = attacker.getAttribute(Attribute.MAX_HEALTH) != null ? attacker.getAttribute(Attribute.MAX_HEALTH).getBaseValue() : 20.0;
             attacker.setHealth(Math.min(max, attacker.getHealth() + heal));
-        } else if (id.equals("thor_axe") && checkCooldown(attacker, "thor_axe", 12)) {
+            victim.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, victim.getLocation().add(0, 1, 0), 12, 0.3, 0.4, 0.3, 0.1);
+        } else if (id.equals("thor_axe") && checkCooldown(attacker, "thor_axe", 10)) {
             victim.getWorld().strikeLightningEffect(victim.getLocation());
-            victim.damage(6.0);
+            victim.damage(7.0);
         } else if (id.equals("soul_reaper")) {
-            victim.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 1));
-            victim.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 0));
+            victim.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 80, 1));
+            victim.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 0));
+            victim.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 80, 1));
+            victim.getWorld().spawnParticle(Particle.SOUL, victim.getLocation().add(0, 1, 0), 20, 0.4, 0.5, 0.4, 0.05);
         }
     }
 
@@ -250,7 +275,8 @@ public class ItemMechanics implements Listener {
     public void onShoot(EntityShootBowEvent e) {
         if (e.getEntity() instanceof Player p && "snipe_bow".equals(getItemId(e.getBow()))) {
             e.getProjectile().setGravity(false);
-            e.getProjectile().setVelocity(e.getProjectile().getVelocity().multiply(1.3));
+            e.getProjectile().setVelocity(e.getProjectile().getVelocity().multiply(1.4));
+            e.getProjectile().setGlowing(true);
         }
     }
 
@@ -259,8 +285,9 @@ public class ItemMechanics implements Listener {
         Player p = e.getPlayer();
         if (e.isSneaking() && p.isGliding() && "dragon_elytra".equals(getItemId(p.getInventory().getChestplate()))) {
             if (checkCooldown(p, "dragon_elytra", 5)) {
-                p.setVelocity(p.getLocation().getDirection().multiply(1.65));
-                p.getWorld().spawnParticle(Particle.DRAGON_BREATH, p.getLocation(), 25, 0.3, 0.3, 0.3, 0.05);
+                p.setVelocity(p.getLocation().getDirection().multiply(1.75));
+                p.getWorld().spawnParticle(Particle.DRAGON_BREATH, p.getLocation(), 35, 0.3, 0.3, 0.3, 0.05);
+                p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP, 1f, 1.2f);
             }
         }
     }
@@ -327,10 +354,11 @@ public class ItemMechanics implements Listener {
         Player killer = e.getEntity().getKiller();
         if (killer == null) return;
         if ("midas_sword".equals(getItemId(killer.getInventory().getItemInMainHand()))) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + killer.getName() + " 500");
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + killer.getName() + " 1000");
         }
         if ("talisman_wealth".equals(getItemId(killer.getInventory().getItemInOffHand()))) {
             e.setDroppedExp(e.getDroppedExp() * 2);
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + killer.getName() + " 250");
         }
     }
 
@@ -342,7 +370,8 @@ public class ItemMechanics implements Listener {
             Block b = c.clone().add(x, y, z).getBlock();
             if (b.getType().isAir() || b.isLiquid()) { b.setType(mat); placed.add(b); }
         }
-        p.getWorld().playSound(c, Sound.BLOCK_ANVIL_LAND, 1f, 0.8f);
+        p.getWorld().playSound(c, Sound.BLOCK_ANVIL_LAND, 1.2f, 0.7f);
+        p.getWorld().spawnParticle(Particle.SMOKE, c.clone().add(0.5, 1, 0.5), 60, r, 1, r, 0.05);
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             for (Block b : placed) if (b.getType() == mat) b.setType(Material.AIR);
         }, sec * 20L);
@@ -350,10 +379,15 @@ public class ItemMechanics implements Listener {
 
     private void runCataclysm(Player p) {
         Location c = p.getLocation();
+        c.getWorld().playSound(c, Sound.ENTITY_ENDERMAN_TELEPORT, 1.4f, 0.5f);
+        c.getWorld().spawnParticle(Particle.PORTAL, c.clone().add(0, 1, 0), 180, 3.5, 1.5, 3.5, 0.25);
         for (Entity ent : c.getWorld().getNearbyEntities(c, 10, 10, 10)) {
-            if (ent instanceof LivingEntity && !ent.equals(p)) ent.setVelocity(c.toVector().subtract(ent.getLocation().toVector()).normalize().multiply(1.6).setY(0.35));
+            if (ent instanceof LivingEntity && !ent.equals(p)) ent.setVelocity(c.toVector().subtract(ent.getLocation().toVector()).normalize().multiply(1.75).setY(0.4));
         }
-        Bukkit.getScheduler().runTaskLater(plugin, () -> c.getWorld().createExplosion(c, 7.5f, false, false, p), 30L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            c.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, c, 4);
+            c.getWorld().createExplosion(c, 8.0f, false, false, p);
+        }, 30L);
     }
 
     private void runTotemRitual(Location loc) {
@@ -367,9 +401,10 @@ public class ItemMechanics implements Listener {
             public void run() {
                 t += 10;
                 bar.setProgress(Math.min(1.0, t / 400.0));
-                loc.getWorld().spawnParticle(Particle.FLAME, loc.clone().add(0, 2, 0), 25, 0.6, 2, 0.6, 0.02);
+                loc.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, loc.clone().add(0, 2, 0), 30, 0.7, 2.5, 0.7, 0.03);
                 if (t >= 400) {
                     cancel();
+                    loc.getWorld().playSound(loc, Sound.ENTITY_WITHER_SPAWN, 1.3f, 0.8f);
                     Ravager boss = (Ravager) loc.getWorld().spawnEntity(loc.clone().add(0, 3, 0), EntityType.RAVAGER);
                     boss.setCustomName(title);
                     boss.setCustomNameVisible(true);
