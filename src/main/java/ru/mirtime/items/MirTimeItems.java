@@ -221,42 +221,36 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
         }
     }
 
-    private boolean isProtectedRegion(Location loc) {
-        try {
-            if (!Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) return false;
-            Class<?> wgClass = Class.forName("com.sk89q.worldguard.WorldGuard");
-            Object wg = wgClass.getMethod("getInstance").invoke(null);
-            Object platform = wgClass.getMethod("getPlatform").invoke(wg);
-            Object container = platform.getClass().getMethod("getRegionContainer").invoke(platform);
-            Object query = container.getClass().getMethod("createQuery").invoke(container);
+private boolean isProtectedRegion(Location loc) {
+    try {
+        if (!Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) return false;
+        Class<?> wgClass = Class.forName("com.sk89q.worldguard.WorldGuard");
+        Object wg = wgClass.getMethod("getInstance").invoke(null);
+        Object platform = wgClass.getMethod("getPlatform").invoke(wg);
+        Object container = platform.getClass().getMethod("getRegionContainer").invoke(platform);
+        Object query = container.getClass().getMethod("createQuery").invoke(container);
 
-            Class<?> bukkitAdapter = Class.forName("com.sk89q.worldedit.bukkit.BukkitAdapter");
-            Object weLoc = bukkitAdapter.getMethod("adapt", Location.class).invoke(null, loc);
+        Class<?> bukkitAdapter = Class.forName("com.sk89q.worldedit.bukkit.BukkitAdapter");
+        Object weLoc = bukkitAdapter.getMethod("adapt", Location.class).invoke(null, loc);
 
-            Class<?> flagsClass = Class.forName("com.sk89q.worldguard.protection.flags.Flags");
-            Object pvpFlag = flagsClass.getField("PVP").get(null);
-            Object mobFlag = flagsClass.getField("MOB_SPAWNING").get(null);
+        Class<?> flagsClass = Class.forName("com.sk89q.worldguard.protection.flags.Flags");
+        Object pvpFlag = flagsClass.getField("PVP").get(null);
 
-            Class<?> stateFlagArray = Class.forName("[Lcom.sk89q.worldguard.protection.flags.StateFlag;");
-            Object array = java.lang.reflect.Array.newInstance(Class.forName("com.sk89q.worldguard.protection.flags.StateFlag"), 1);
+        Class<?> stateFlagArray = Class.forName("[Lcom.sk89q.worldguard.protection.flags.StateFlag;");
+        Object array = java.lang.reflect.Array.newInstance(Class.forName("com.sk89q.worldguard.protection.flags.StateFlag"), 1);
+        java.lang.reflect.Array.set(array, 0, pvpFlag);
 
-            java.lang.reflect.Array.set(array, 0, pvpFlag);
-            boolean pvpAllowed = (boolean) query.getClass().getMethod("testState",
-                    Class.forName("com.sk89q.worldedit.util.Location"),
-                    Class.forName("com.sk89q.worldguard.protection.association.RegionAssociable"),
-                    stateFlagArray).invoke(query, weLoc, null, array);
+        boolean pvpAllowed = (boolean) query.getClass().getMethod("testState",
+                Class.forName("com.sk89q.worldedit.util.Location"),
+                Class.forName("com.sk89q.worldguard.protection.association.RegionAssociable"),
+                stateFlagArray).invoke(query, weLoc, null, array);
 
-            java.lang.reflect.Array.set(array, 0, mobFlag);
-            boolean mobAllowed = (boolean) query.getClass().getMethod("testState",
-                    Class.forName("com.sk89q.worldedit.util.Location"),
-                    Class.forName("com.sk89q.worldguard.protection.association.RegionAssociable"),
-                    stateFlagArray).invoke(query, weLoc, null, array);
-
-            return !pvpAllowed || !mobAllowed;
-        } catch (Exception ignored) {
-            return false;
-        }
+        return !pvpAllowed;
+    } catch (Exception ignored) {
+        return false;
     }
+}
+
 
     private void activateTrapka(Player p) {
         Location center = p.getLocation().getBlock().getLocation();
