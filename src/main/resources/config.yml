@@ -8,10 +8,6 @@
 
 prefix: "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "
 
-# Режимы проверки миров для каждого предмета (world-mode):
-# BLOCKED - запретить предмет в мирах из списка worlds (во всех остальных разрешено)
-# ALLOWED - разрешить предмет ТОЛЬКО в мирах из списка worlds
-
 trapka:
   cooldown-seconds: 30
   duration-seconds: 18
@@ -37,7 +33,6 @@ totem:
   world-mode: "BLOCKED"
   worlds:
     - "game"
-
   rewards:
     - "eco give %player% 50000"
     - "p give %player% 500"
