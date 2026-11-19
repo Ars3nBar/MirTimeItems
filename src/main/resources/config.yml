@@ -19,11 +19,6 @@ trapka:
   world-mode: "BLOCKED"
   worlds:
     - "game"
-    - "game_nether"
-    - "game_the_end"
-    - "world"
-    - "world_nether"
-    - "world_the_end"
 
 cataclysm:
   cooldown-seconds: 40
@@ -31,8 +26,7 @@ cataclysm:
   explosion-power: 7.5
   world-mode: "BLOCKED"
   worlds:
-    - "spawn"
-    - "darena"
+    - "game"
 
 totem:
   cooldown-seconds: 60
@@ -42,8 +36,8 @@ totem:
   boss-health: 800.0
   world-mode: "BLOCKED"
   worlds:
-    - "spawn"
-    - "darena"
+    - "game"
+
   rewards:
     - "eco give %player% 50000"
     - "p give %player% 500"
