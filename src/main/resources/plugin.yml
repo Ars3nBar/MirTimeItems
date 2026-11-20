@@ -1,15 +1,23 @@
-name: MirTimePass
-version: '4.0.0'
-main: ru.mirtime.pass.MirTimePass
+name: MirTimeItems
+version: '3.2.0'
+main: ru.mirtime.items.MirTimeItems
 api-version: '1.21'
+authors: [Ars3nBar, MirTime]
+description: Уникальные артефакты, киты и Ядро Армагеддона для анархии MIR-TIME 3.0
 softdepend:
-  - PlaceholderAPI
-  - PlayerPoints
+  - WorldGuard
+  - WorldEdit
+  - Vault
   - GemsEconomy
-  - MirTimeItems
+  - PlaceholderAPI
+
 commands:
-  bp:
-    description: Открыть Боевой Пропуск MIR-TIME
-    aliases: [battlepass, pass, бп]
-  mtpass:
-    description: Управление Боевым Пропуском MIR-TIME
+  mtitems:
+    description: Каталог и выдача уникальных артефактов MIR-TIME
+    aliases: [items, mti, артефакты]
+    usage: /mtitems <gui|give>
+
+permissions:
+  mirtime.items.admin:
+    description: Доступ к выдаче артефактов и взятию предметов из /mtitems gui
+    default: op
