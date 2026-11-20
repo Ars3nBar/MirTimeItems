@@ -1,97 +1,162 @@
 package ru.mirtime.items;
 
-import org.bukkit.*;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabCompleter {
 
-    private NamespacedKey itemKey;
+    public NamespacedKey ITEM_KEY;
+    private final Map<UUID, Map<String, Long>> cooldowns = new ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        itemKey = new NamespacedKey(this, "mt_custom_item");
+        ITEM_KEY = new NamespacedKey(this, "mt_item_id");
 
         if (getCommand("mtitems") != null) {
             getCommand("mtitems").setExecutor(this);
             getCommand("mtitems").setTabCompleter(this);
         }
-        Bukkit.getPluginManager().registerEvents(new ItemMechanics(this), this);
-        getLogger().info("MirTimeItems v2.5.0 (30 уникальных артефактов) запущен!");
+
+        ItemMechanics mechanics = new ItemMechanics(this);
+        Bukkit.getPluginManager().registerEvents(mechanics, this);
+        mechanics.startPassiveTask();
+
+        getLogger().info("MirTimeItems v2.6.0 (Белый список миров анархии, 30 предметов) запущен!");
     }
 
-    public NamespacedKey getItemKey() { return itemKey; }
-    public String getPrefix() { return getConfig().getString("prefix", "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "); }
+    public String getItemId(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return null;
+        return item.getItemMeta().getPersistentDataContainer().get(ITEM_KEY, PersistentDataType.STRING);
+    }
+
+    public boolean checkCooldown(Player p, String id, int seconds) {
+        long now = System.currentTimeMillis();
+        Map<String, Long> playerCd = cooldowns.computeIfAbsent(p.getUniqueId(), k -> new ConcurrentHashMap<>());
+        long end = playerCd.getOrDefault(id, 0L);
+
+        if (now < end) {
+            long left = (end - now) / 1000L + 1L;
+            String prefix = color(getConfig().getString("prefix", "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "));
+            p.sendMessage(prefix + color("&cПодождите &f" + left + " сек. &cперед повторным использованием!"));
+            return false;
+        }
+        playerCd.put(id, now + (seconds * 1000L));
+        return true;
+    }
 
     public boolean isBlocked(Location loc) {
-        if (loc.getWorld().getName().equalsIgnoreCase("game")) return true;
+        if (loc == null || loc.getWorld() == null) return true;
+        String wName = loc.getWorld().getName().toLowerCase();
+
+        // Белый список миров, где РАЗРЕШЕНЫ все 30 артефактов
+        List<String> allowedWorlds = getConfig().getStringList("allowed-worlds");
+        if (allowedWorlds.isEmpty()) {
+            allowedWorlds = List.of("world", "world_nether", "world_the_end", "anarchy");
+        } else {
+            List<String> lower = new ArrayList<>();
+            for (String w : allowedWorlds) lower.add(w.toLowerCase());
+            allowedWorlds = lower;
+        }
+
+        // Если мир НЕ в списке разрешённых (например, мир game или duels) — блокируем
+        if (!allowedWorlds.contains(wName)) {
+            return true;
+        }
+
+        // Дополнительно запрещаем только в приватах спавна (spawn / hub)
         try {
-            if (!Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) return false;
-            Class<?> wgClass = Class.forName("com.sk89q.worldguard.WorldGuard");
-            Object wg = wgClass.getMethod("getInstance").invoke(null);
-            Object platform = wgClass.getMethod("getPlatform").invoke(wg);
-            Object container = platform.getClass().getMethod("getRegionContainer").invoke(platform);
-            Object query = container.getClass().getMethod("createQuery").invoke(container);
-            Object weLoc = Class.forName("com.sk89q.worldedit.bukkit.BukkitAdapter").getMethod("adapt", Location.class).invoke(null, loc);
-            Object pvpFlag = Class.forName("com.sk89q.worldguard.protection.flags.Flags").getField("PVP").get(null);
-            Object array = java.lang.reflect.Array.newInstance(Class.forName("com.sk89q.worldguard.protection.flags.StateFlag"), 1);
-            java.lang.reflect.Array.set(array, 0, pvpFlag);
-            boolean pvpAllowed = (boolean) query.getClass().getMethod("testState",
-                    Class.forName("com.sk89q.worldedit.util.Location"),
-                    Class.forName("com.sk89q.worldguard.protection.association.RegionAssociable"),
-                    Class.forName("[Lcom.sk89q.worldguard.protection.flags.StateFlag;")).invoke(query, weLoc, null, array);
-            return !pvpAllowed;
-        } catch (Exception ignored) { return false; }
+            if (Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
+                RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+                RegionManager regions = container.get(BukkitAdapter.adapt(loc.getWorld()));
+                if (regions != null) {
+                    for (ProtectedRegion reg : regions.getApplicableRegions(BlockVector3.at(loc.getX(), loc.getY(), loc.getZ()))) {
+                        if (reg.getId().equalsIgnoreCase("spawn") || reg.getId().equalsIgnoreCase("hub")) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        return false;
     }
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        String prefix = color(getConfig().getString("prefix", "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "));
         List<String> list = List.of(args);
-        if (!list.isEmpty() && list.get(0).equalsIgnoreCase("reload")) {
-            reloadConfig();
-            sender.sendMessage(color(getPrefix() + "&#00FF66Конфиг перезагружен!"));
+
+        if (list.isEmpty()) {
+            if (sender instanceof Player p) {
+                ItemRegistry.openCatalog(p, this);
+            } else {
+                sender.sendMessage("Используйте: /mtitems give <игрок> <предмет> [кол-во]");
+            }
             return true;
         }
-        if (list.size() < 3 || !list.get(0).equalsIgnoreCase("give")) {
-            sender.sendMessage(color(getPrefix() + "&fИспользование: &#00FF66/mtitems give <ник> <предмет> [кол-во]"));
+
+        if (list.get(0).equalsIgnoreCase("gui") && sender instanceof Player p) {
+            ItemRegistry.openCatalog(p, this);
             return true;
         }
-        Player target = Bukkit.getPlayer(list.get(1));
-        if (target == null) {
-            sender.sendMessage(color(getPrefix() + "&cИгрок не в сети."));
+
+        if (!sender.hasPermission("mirtime.items.admin")) {
+            sender.sendMessage(prefix + color("&cНедостаточно прав!"));
             return true;
         }
-        int amt = 1;
-        if (list.size() >= 4) {
-            try { amt = Math.max(1, Integer.parseInt(list.get(3))); } catch (Exception ignored) {}
-        }
-        ItemStack is = ItemRegistry.create(itemKey, list.get(2), amt);
-        if (is == null) {
-            sender.sendMessage(color(getPrefix() + "&cНеизвестный ID предмета! Используйте Tab для выбора из 30 предметов."));
+
+        if (list.get(0).equalsIgnoreCase("give") && list.size() >= 3) {
+            Player target = Bukkit.getPlayer(list.get(1));
+            if (target == null) {
+                sender.sendMessage(prefix + color("&cИгрок не в сети!"));
+                return true;
+            }
+            String id = list.get(2).toLowerCase();
+            int amount = 1;
+            if (list.size() >= 4) {
+                try { amount = Math.max(1, Math.min(64, Integer.parseInt(list.get(3)))); } catch (Exception ignored) {}
+            }
+
+            ItemStack item = ItemRegistry.createItem(this, id, amount);
+            if (item == null) {
+                sender.sendMessage(prefix + color("&cПредмет не найден! Доступны: " + String.join(", ", ItemRegistry.IDS)));
+                return true;
+            }
+            target.getInventory().addItem(item);
+            sender.sendMessage(prefix + color("&#00FF66Выдан предмет &f" + id + " &7(x" + amount + ") &#00FF66игроку &f" + target.getName()));
             return true;
         }
-        target.getInventory().addItem(is);
-        sender.sendMessage(color(getPrefix() + "&#00FF66Выдан предмет &f" + list.get(2) + " &7(x" + amt + ") &#00FF66игроку &f" + target.getName()));
+
+        sender.sendMessage(prefix + color("&fКоманды: &#00FF66/mtitems gui &7или &#00FF66/mtitems give <ник> <id> [кол-во]"));
         return true;
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
-        if (args.length == 1) return List.of("give", "reload");
-        if (args.length == 2 && List.of(args).get(0).equalsIgnoreCase("give")) return null;
-        if (args.length == 3 && List.of(args).get(0).equalsIgnoreCase("give")) {
-            String start = List.of(args).get(2).toLowerCase();
-            return ItemRegistry.ALL_IDS.stream().filter(s -> s.startsWith(start)).toList();
-        }
+        if (args.length == 1) return List.of("gui", "give");
+        if (args.length == 2 && args[0].equalsIgnoreCase("give")) return null;
+        if (args.length == 3 && args[0].equalsIgnoreCase("give")) return ItemRegistry.IDS;
         return List.of();
     }
 
