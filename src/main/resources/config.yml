@@ -8,21 +8,34 @@
 
 prefix: "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "
 
+# Общий белый список миров для новой версии плагина
+allowed-worlds:
+  - "world"
+  - "world_nether"
+  - "world_the_end"
+  - "anarchy"
+
 trapka:
   cooldown-seconds: 30
   duration-seconds: 18
   material: "OBSIDIAN"
-  world-mode: "BLOCKED"
+  world-mode: "ALLOWED"
   worlds:
-    - "game"
+    - "world"
+    - "world_nether"
+    - "world_the_end"
+    - "anarchy"
 
 cataclysm:
   cooldown-seconds: 40
   radius: 10.0
   explosion-power: 7.5
-  world-mode: "BLOCKED"
+  world-mode: "ALLOWED"
   worlds:
-    - "game"
+    - "world"
+    - "world_nether"
+    - "world_the_end"
+    - "anarchy"
 
 totem:
   cooldown-seconds: 60
@@ -30,9 +43,12 @@ totem:
   fight-seconds: 60
   boss-name: "&#0055ff&l☠ &#00E5FF&lПОРОЖДЕНИЕ БЕЗДНЫ &#0055ff&l☠"
   boss-health: 800.0
-  world-mode: "BLOCKED"
+  world-mode: "ALLOWED"
   worlds:
-    - "game"
+    - "world"
+    - "world_nether"
+    - "world_the_end"
+    - "anarchy"
   rewards:
     - "eco give %player% 50000"
     - "p give %player% 500"
