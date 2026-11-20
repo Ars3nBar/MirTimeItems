@@ -113,6 +113,7 @@ public class ItemMechanics implements Listener {
             return;
         }
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (id.startsWith("god_") || id.startsWith("jack_") || id.startsWith("king_") || id.startsWith("christian_")) return;
         if (Set.of("vampire_blade", "thor_axe", "midas_sword", "soul_reaper", "snipe_bow", "drill_pickaxe", "magnet_pickaxe", "spawner_silk", "farmer_hoe", "hermes_boots", "titan_chest", "dragon_elytra", "talisman_rage", "talisman_speed", "talisman_wealth", "lightning_trident", "berserk_axe", "phoenix_totem").contains(id)) return;
 
         e.setCancelled(true);
@@ -124,15 +125,15 @@ public class ItemMechanics implements Listener {
         }
 
         switch (id) {
-            case "trapka" -> { if (checkCooldown(p, id, 30)) { consumeOne(p, is); buildCube(p, Material.OBSIDIAN, 2, 18); } }
-            case "mega_trap" -> { if (checkCooldown(p, id, 45)) { consumeOne(p, is); buildCube(p, Material.CRYING_OBSIDIAN, 3, 25); } }
+            case "trapka" -> { if (checkCooldown(p, id, 30)) { consumeOne(p, is); buildStylishTrap(p, 2, 18, false); } }
+            case "mega_trap" -> { if (checkCooldown(p, id, 45)) { consumeOne(p, is); buildStylishTrap(p, 3, 25, true); } }
             case "bedrock_shield" -> {
                 if (checkCooldown(p, id, 40)) {
                     consumeOne(p, is);
-                    buildCube(p, Material.OBSIDIAN, 2, 12);
+                    buildStylishTrap(p, 2, 12, true);
                     p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 240, 2));
                     p.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 240, 2));
-                    p.sendMessage(MirTimeItems.color(plugin.getPrefix() + "&#00E5FF&lЭгида Титана активирована! &fЗащитный купол на 12 сек."));
+                    p.sendMessage(MirTimeItems.color(plugin.getPrefix() + "&#00E5FF&lЭгида Титана активирована! &fНеоновый купол на 12 сек."));
                 }
             }
             case "cataclysm" -> { if (checkCooldown(p, id, 40)) { consumeOne(p, is); runCataclysm(p); } }
@@ -143,7 +144,7 @@ public class ItemMechanics implements Listener {
                     for (Entity ent : p.getNearbyEntities(9, 9, 9)) {
                         if (ent instanceof LivingEntity le && !ent.equals(p)) {
                             le.setFreezeTicks(160);
-                            le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 4));
+                            le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 4));
                             le.getWorld().spawnParticle(Particle.ITEM_SNOWBALL, le.getLocation().add(0, 1, 0), 30, 0.4, 0.6, 0.4, 0.1);
                         }
                     }
@@ -175,16 +176,18 @@ public class ItemMechanics implements Listener {
             case "disorient" -> {
                 if (checkCooldown(p, id, 30)) {
                     consumeOne(p, is);
-                    p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.4f, 0.8f);
-                    p.getWorld().spawnParticle(Particle.FLASH, p.getLocation().add(0, 1.5, 0), 3);
-                    p.getWorld().spawnParticle(Particle.WITCH, p.getLocation().add(0, 1, 0), 120, 4, 1, 4, 0.1);
+                    p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.5f, 0.8f);
+                    p.getWorld().spawnParticle(Particle.FLASH, p.getLocation().add(0, 1.5, 0), 4);
+                    p.getWorld().spawnParticle(Particle.WITCH, p.getLocation().add(0, 1, 0), 140, 4.5, 1.2, 4.5, 0.15);
                     for (Entity ent : p.getNearbyEntities(10, 10, 10)) {
-                        if (ent instanceof Player target && !target.equals(p)) {
-                            target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 120, 1));
-                            target.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 120, 1));
-                            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 120, 2));
+                        if (ent instanceof LivingEntity target && !target.equals(p)) {
+                            target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 120, 1, false, true));
+                            target.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 120, 1, false, true));
+                            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 120, 2, false, true));
+                            target.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 120, 1, false, true));
                         }
                     }
+                    p.sendMessage(MirTimeItems.color(plugin.getPrefix() + "&#00E5FF&lДезориентация! &fВсе враги вокруг ослеплены и ослаблены на 6 сек."));
                 }
             }
             case "divine_aura" -> {
@@ -197,17 +200,17 @@ public class ItemMechanics implements Listener {
                 }
             }
             case "web_bomb" -> {
-                if (checkCooldown(p, id, 25)) {
+                if (checkCooldown(p, id, 20)) {
                     consumeOne(p, is);
-                    for (Entity ent : p.getNearbyEntities(10, 10, 10)) {
-                        if (ent instanceof Player target && !target.equals(p)) {
-                            Location c = target.getLocation().getBlock().getLocation();
-                            for (int x = -1; x <= 1; x++) for (int y = 0; y <= 1; y++) for (int z = -1; z <= 1; z++) {
-                                Block b = c.clone().add(x, y, z).getBlock();
-                                if (b.isReplaceable()) b.setType(Material.COBWEB);
-                            }
-                            target.getWorld().playSound(c, Sound.ENTITY_SPIDER_AMBIENT, 1.3f, 0.7f);
-                            break;
+                    Location c = p.getLocation();
+                    c.getWorld().playSound(c, Sound.ENTITY_WARDEN_SONIC_BOOM, 1.3f, 1.2f);
+                    c.getWorld().spawnParticle(Particle.SONIC_BOOM, c.clone().add(0, 1, 0), 8, 3, 0.5, 3, 0.1);
+                    for (Entity ent : p.getNearbyEntities(9, 9, 9)) {
+                        if (ent instanceof LivingEntity le && !ent.equals(p)) {
+                            Vector push = le.getLocation().toVector().subtract(c.toVector()).normalize().multiply(2.2).setY(0.85);
+                            le.setVelocity(push);
+                            le.damage(6.0, p);
+                            le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 2));
                         }
                     }
                 }
@@ -246,15 +249,15 @@ public class ItemMechanics implements Listener {
             case "loot_flare" -> {
                 if (checkCooldown(p, id, 60)) {
                     consumeOne(p, is);
-                    Location dropLoc = p.getLocation().add(0, 1, 0);
-                    p.getWorld().spawnParticle(Particle.FIREWORK, dropLoc.clone().add(0, 2, 0), 70, 0.6, 1, 0.6, 0.15);
-                    p.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.DIAMOND, 10));
-                    p.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.GOLDEN_APPLE, 5));
-                    p.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.EXPERIENCE_BOTTLE, 24));
-                    p.playSound(dropLoc, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1.2f, 1f);
+                    runAirdropFlare(p, p.getLocation().clone());
                 }
             }
-            case "totem" -> { if (checkCooldown(p, id, 60)) { consumeOne(p, is); runTotemRitual(p.getLocation()); } }
+            case "totem" -> {
+                if (checkCooldown(p, id, 60)) {
+                    consumeOne(p, is);
+                    runTimedBoss(p.getLocation().clone());
+                }
+            }
             case "meteor_staff" -> {
                 if (checkCooldown(p, id, 25)) {
                     Block target = p.getTargetBlockExact(50);
@@ -309,7 +312,7 @@ public class ItemMechanics implements Listener {
                     for (Entity ent : p.getNearbyEntities(25, 25, 25)) {
                         if (ent instanceof LivingEntity le && !ent.equals(p) && p.hasLineOfSight(le)) {
                             Vector toTarget = le.getEyeLocation().toVector().subtract(p.getEyeLocation().toVector()).normalize();
-                            if (toTarget.dot(p.getLocation().getDirection()) > 0.94) { target = le; break; }
+                            if (toTarget.dot(p.getLocation().getDirection()) > 0.92) { target = le; break; }
                         }
                     }
                     if (target != null) {
@@ -344,43 +347,49 @@ public class ItemMechanics implements Listener {
             }
             case "lava_prison" -> {
                 if (checkCooldown(p, id, 35)) {
-                    consumeOne(p, is);
+                    LivingEntity target = null;
                     for (Entity ent : p.getNearbyEntities(12, 12, 12)) {
-                        if (ent instanceof Player target && !target.equals(p)) {
-                            Location c = target.getLocation().getBlock().getLocation();
-                            List<Block> cage = new ArrayList<>();
-                            for (int x = -1; x <= 1; x++) for (int y = -1; y <= 2; y++) for (int z = -1; z <= 1; z++) {
-                                if (Math.abs(x) == 1 || Math.abs(z) == 1 || y == -1 || y == 2) {
-                                    Block b = c.clone().add(x, y, z).getBlock();
-                                    if (b.isReplaceable()) { b.setType(Material.MAGMA_BLOCK); cage.add(b); }
-                                }
+                        if (ent instanceof LivingEntity le && !ent.equals(p) && !(ent instanceof ArmorStand)) { target = le; break; }
+                    }
+                    Location c = target != null ? target.getLocation().getBlock().getLocation() : p.getLocation().add(p.getLocation().getDirection().multiply(4)).getBlock().getLocation();
+                    consumeOne(p, is);
+                    List<Block> cage = new ArrayList<>();
+                    for (int x = -1; x <= 1; x++) for (int y = -1; y <= 2; y++) for (int z = -1; z <= 1; z++) {
+                        if (Math.abs(x) == 1 || Math.abs(z) == 1 || y == -1 || y == 2) {
+                            Block b = c.clone().add(x, y, z).getBlock();
+                            if (b.isReplaceable()) {
+                                b.setType((Math.abs(x) == 1 && Math.abs(z) == 1) ? Material.MAGMA_BLOCK : Material.RED_STAINED_GLASS);
+                                cage.add(b);
                             }
-                            Block feet = c.getBlock();
-                            if (feet.isReplaceable()) { feet.setType(Material.LAVA); cage.add(feet); }
-                            target.getWorld().playSound(c, Sound.ITEM_BUCKET_EMPTY_LAVA, 1.4f, 0.8f);
-                            Bukkit.getScheduler().runTaskLater(plugin, () -> { for (Block b : cage) b.setType(Material.AIR); }, 200L);
-                            break;
                         }
                     }
+                    Block feet = c.getBlock();
+                    if (feet.isReplaceable()) { feet.setType(Material.FIRE); cage.add(feet); }
+                    c.getWorld().playSound(c, Sound.ITEM_BUCKET_EMPTY_LAVA, 1.4f, 0.8f);
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> { for (Block b : cage) b.setType(Material.AIR); }, 200L);
                 }
             }
             case "midas_touch" -> {
                 if (checkCooldown(p, id, 30)) {
                     consumeOne(p, is);
-                    for (Entity ent : p.getNearbyEntities(10, 10, 10)) {
+                    Location c = p.getLocation().getBlock().getLocation();
+                    for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++) {
+                        Block b = c.clone().add(x, -1, z).getBlock();
+                        if (b.getType().isSolid() && b.getType() != Material.BEDROCK) b.setType(Material.GOLD_BLOCK);
+                    }
+                    int robbed = 0;
+                    for (Entity ent : p.getNearbyEntities(3, 3, 3)) {
                         if (ent instanceof Player target && !target.equals(p)) {
-                            Location c = target.getLocation().getBlock().getLocation();
-                            for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++) {
-                                Block b = c.clone().add(x, -1, z).getBlock();
-                                if (b.getType().isSolid() && b.getType() != Material.BEDROCK) b.setType(Material.GOLD_BLOCK);
-                            }
                             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 3));
-                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + target.getName() + " 2500");
-                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + p.getName() + " 2500");
-                            p.getWorld().playSound(c, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.5f, 1.5f);
-                            break;
+                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco take " + target.getName() + " 5000");
+                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + p.getName() + " 5000");
+                            target.sendMessage(MirTimeItems.color(plugin.getPrefix() + "&cИгрок &f" + p.getName() + " &cиспользовал Руку Мидаса и забрал у вас &#FFD7005.000 Монет&c!"));
+                            robbed += 5000;
                         }
                     }
+                    p.getWorld().playSound(c, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.5f, 1.5f);
+                    p.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, c.clone().add(0.5, 1, 0.5), 60, 2, 0.5, 2, 0.1);
+                    p.sendMessage(MirTimeItems.color(plugin.getPrefix() + "&#FFD700&lРука Мидаса! &fЗона 5x5 обращена в золото! Собрано: &#00FF66" + robbed + " Монет"));
                 }
             }
             case "dragon_breath_bomb" -> {
@@ -437,11 +446,11 @@ public class ItemMechanics implements Listener {
                         Location step = start.clone().add(dir.clone().multiply(i));
                         for (int w = -1; w <= 1; w++) {
                             Block b = step.clone().add(-dir.getZ() * w, 0, dir.getX() * w).getBlock();
-                            if (b.isReplaceable()) { b.setType(Material.OBSIDIAN); bridge.add(b); }
+                            if (b.isReplaceable()) { b.setType(w == 0 ? Material.CRYING_OBSIDIAN : Material.OBSIDIAN); bridge.add(b); }
                         }
                     }
                     p.getWorld().playSound(p.getLocation(), Sound.BLOCK_STONE_PLACE, 1.5f, 0.8f);
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> { for (Block b : bridge) if (b.getType() == Material.OBSIDIAN) b.setType(Material.AIR); }, 300L);
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> { for (Block b : bridge) b.setType(Material.AIR); }, 300L);
                 }
             }
         }
@@ -451,6 +460,30 @@ public class ItemMechanics implements Listener {
         is.setAmount(is.getAmount() - 1);
         p.updateInventory();
     }
+    private void triggerPoseidonLightning(Player attacker, Location center) {
+        if (!checkCooldown(attacker, "lightning_trident", 8)) return;
+        center.getWorld().playSound(center, Sound.ITEM_TRIDENT_THUNDER, 1.5f, 1.0f);
+        int hits = 0;
+        for (Entity ent : center.getWorld().getNearbyEntities(center, 8, 8, 8)) {
+            if (ent instanceof LivingEntity le && !ent.equals(attacker) && !(ent instanceof ArmorStand)) {
+                le.getWorld().strikeLightningEffect(le.getLocation());
+                le.damage(7.0, attacker);
+                le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 2));
+                hits++;
+                if (hits >= 5) break;
+            }
+        }
+    }
+
+    @EventHandler
+    public void onTridentThrowHit(ProjectileHitEvent e) {
+        if (e.getEntity() instanceof Trident trident && trident.getShooter() instanceof Player p) {
+            if ("lightning_trident".equals(getItemId(trident.getItemStack()))) {
+                triggerPoseidonLightning(p, trident.getLocation());
+            }
+        }
+    }
+
     @EventHandler
     public void onHit(EntityDamageByEntityEvent e) {
         if (!(e.getDamager() instanceof Player attacker) || !(e.getEntity() instanceof LivingEntity victim)) return;
@@ -470,14 +503,8 @@ public class ItemMechanics implements Listener {
             victim.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 0));
             victim.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 80, 1));
             victim.getWorld().spawnParticle(Particle.SOUL, victim.getLocation().add(0, 1, 0), 20, 0.4, 0.5, 0.4, 0.05);
-        } else if (id.equals("lightning_trident") && checkCooldown(attacker, "lightning_trident", 12)) {
-            for (Entity ent : victim.getNearbyEntities(8, 8, 8)) {
-                if (ent instanceof LivingEntity le && !ent.equals(attacker)) {
-                    le.getWorld().strikeLightningEffect(le.getLocation());
-                    le.damage(6.0);
-                    le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 2));
-                }
-            }
+        } else if (id.equals("lightning_trident")) {
+            triggerPoseidonLightning(attacker, victim.getLocation());
         } else if (id.equals("berserk_axe")) {
             if (attacker.getHealth() <= 8.0) {
                 e.setDamage(e.getDamage() * 2.1);
@@ -597,7 +624,7 @@ public class ItemMechanics implements Listener {
         }
     }
 
-    private void buildCube(Player p, Material mat, int r, int sec) {
+    private void buildStylishTrap(Player p, int r, int sec, boolean neon) {
         Location c = p.getLocation().getBlock().getLocation();
         Location center = c.clone().add(0.5, 0, 0.5);
         center.setYaw(p.getLocation().getYaw());
@@ -606,14 +633,32 @@ public class ItemMechanics implements Listener {
 
         List<Block> placed = new ArrayList<>();
         for (int x = -r; x <= r; x++) for (int y = -1; y <= r + 1; y++) for (int z = -r; z <= r; z++) {
-            if (Math.abs(x) != r && Math.abs(z) != r && y != -1 && y != r + 1) continue;
+            boolean isEdgeX = Math.abs(x) == r;
+            boolean isEdgeZ = Math.abs(z) == r;
+            boolean isFloor = y == -1;
+            boolean isRoof = y == r + 1;
+            if (!isEdgeX && !isEdgeZ && !isFloor && !isRoof) continue;
+
             Block b = c.clone().add(x, y, z).getBlock();
-            if (b.isReplaceable()) { b.setType(mat); placed.add(b); }
+            if (!b.isReplaceable()) continue;
+
+            Material mat;
+            if (isEdgeX && isEdgeZ) {
+                mat = Material.CRYING_OBSIDIAN;
+            } else if (isRoof && x == 0 && z == 0) {
+                mat = Material.SEA_LANTERN;
+            } else if (y == 1 && (x == 0 || z == 0)) {
+                mat = neon ? Material.LIGHT_BLUE_STAINED_GLASS : Material.BLACK_STAINED_GLASS;
+            } else {
+                mat = neon ? Material.CRYING_OBSIDIAN : Material.OBSIDIAN;
+            }
+            b.setType(mat);
+            placed.add(b);
         }
-        p.getWorld().playSound(c, Sound.BLOCK_ANVIL_LAND, 1.2f, 0.7f);
-        p.getWorld().spawnParticle(Particle.SMOKE, center.clone().add(0, 1, 0), 60, r, 1, r, 0.05);
+        p.getWorld().playSound(c, Sound.BLOCK_BEACON_ACTIVATE, 1.3f, 0.8f);
+        p.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, center.clone().add(0, 1, 0), 70, r * 0.7, 1, r * 0.7, 0.05);
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            for (Block b : placed) if (b.getType() == mat) b.setType(Material.AIR);
+            for (Block b : placed) b.setType(Material.AIR);
         }, sec * 20L);
     }
 
@@ -630,29 +675,70 @@ public class ItemMechanics implements Listener {
         }, 30L);
     }
 
-    private void runTotemRitual(Location loc) {
-        String title = MirTimeItems.color(plugin.getConfig().getString("totem.boss-name", "&#0055ff&l☠ ПОРОЖДЕНИЕ БЕЗДНЫ"));
-        BossBar bar = Bukkit.createBossBar(title, BarColor.BLUE, BarStyle.SEGMENTED_20);
-        for (Player pl : loc.getWorld().getPlayers()) if (pl.getLocation().distanceSquared(loc) <= 2500) bar.addPlayer(pl);
+    private void runAirdropFlare(Player p, Location loc) {
+        BossBar bar = Bukkit.createBossBar(MirTimeItems.color("&#FFD700&l🎆 АИРДРОП ПРИБУДЕТ ЧЕРЕЗ: &#00FF6610 сек."), BarColor.YELLOW, BarStyle.SEGMENTED_10);
+        for (Player pl : loc.getWorld().getPlayers()) if (pl.getLocation().distanceSquared(loc) <= 3600) bar.addPlayer(pl);
+        loc.getWorld().playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.5f, 0.8f);
 
         new BukkitRunnable() {
-            int t = 0;
+            int secLeft = 10;
             @Override
             public void run() {
-                t += 10;
-                bar.setProgress(Math.min(1.0, t / 400.0));
-                loc.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, loc.clone().add(0, 2, 0), 30, 0.7, 2.5, 0.7, 0.03);
-                if (t >= 400) {
+                loc.getWorld().spawnParticle(Particle.FLAME, loc.clone().add(0.5, 1, 0.5), 25, 0.2, 3.0, 0.2, 0.03);
+                bar.setProgress(Math.max(0.0, secLeft / 10.0));
+                bar.setTitle(MirTimeItems.color("&#FFD700&l🎆 АИРДРОП ПРИБУДЕТ ЧЕРЕЗ: &#00FF66" + secLeft + " сек."));
+                if (secLeft <= 0) {
                     cancel();
-                    loc.getWorld().playSound(loc, Sound.ENTITY_WITHER_SPAWN, 1.3f, 0.8f);
-                    Ravager boss = (Ravager) loc.getWorld().spawnEntity(loc.clone().add(0, 3, 0), EntityType.RAVAGER);
-                    boss.setCustomName(title);
-                    boss.setCustomNameVisible(true);
-                    summonedBosses.add(boss.getUniqueId());
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> { if (boss.isValid()) boss.remove(); bar.removeAll(); }, 1200L);
+                    bar.removeAll();
+                    Location dropLoc = loc.clone().add(0.5, 1.5, 0.5);
+                    loc.getWorld().spawnParticle(Particle.FIREWORK, dropLoc, 100, 0.8, 1.2, 0.8, 0.2);
+                    loc.getWorld().playSound(dropLoc, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1.5f, 1.0f);
+                    loc.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.DIAMOND, 16));
+                    loc.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.GOLDEN_APPLE, 8));
+                    loc.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.NETHERITE_SCRAP, 2));
+                    loc.getWorld().dropItemNaturally(dropLoc, new ItemStack(Material.EXPERIENCE_BOTTLE, 32));
                 }
+                secLeft--;
             }
-        }.runTaskTimer(plugin, 0L, 10L);
+        }.runTaskTimer(plugin, 0L, 20L);
+    }
+
+    private void runTimedBoss(Location loc) {
+        String title = MirTimeItems.color(plugin.getConfig().getString("totem.boss-name", "&#0055ff&l☠ ПОРОЖДЕНИЕ БЕЗДНЫ"));
+        loc.getWorld().playSound(loc, Sound.ENTITY_WITHER_SPAWN, 1.4f, 0.8f);
+        loc.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, loc.clone().add(0, 1.5, 0), 120, 1.2, 2.0, 1.2, 0.08);
+
+        Ravager boss = (Ravager) loc.getWorld().spawnEntity(loc.clone().add(0, 1, 0), EntityType.RAVAGER);
+        boss.setCustomName(title);
+        boss.setCustomNameVisible(true);
+        summonedBosses.add(boss.getUniqueId());
+
+        BossBar bar = Bukkit.createBossBar(title + MirTimeItems.color(" &8| &#00E5FF60 сек."), BarColor.BLUE, BarStyle.SEGMENTED_20);
+        for (Player pl : loc.getWorld().getPlayers()) if (pl.getLocation().distanceSquared(loc) <= 3600) bar.addPlayer(pl);
+
+        new BukkitRunnable() {
+            int secLeft = 60;
+            @Override
+            public void run() {
+                if (!boss.isValid() || boss.isDead()) {
+                    cancel();
+                    bar.removeAll();
+                    return;
+                }
+                bar.setProgress(Math.max(0.0, secLeft / 60.0));
+                bar.setTitle(title + MirTimeItems.color(" &8| &#00E5FF" + secLeft + " сек."));
+                if (secLeft <= 0) {
+                    cancel();
+                    Location bLoc = boss.getLocation();
+                    bLoc.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, bLoc.clone().add(0, 1.5, 0), 120, 1.2, 2.0, 1.2, 0.08);
+                    bLoc.getWorld().playSound(bLoc, Sound.ENTITY_WITHER_DEATH, 1.2f, 1.2f);
+                    summonedBosses.remove(boss.getUniqueId());
+                    boss.remove();
+                    bar.removeAll();
+                }
+                secLeft--;
+            }
+        }.runTaskTimer(plugin, 0L, 20L);
     }
 
     @EventHandler public void onBossBlock(EntityChangeBlockEvent e) { if (summonedBosses.contains(e.getEntity().getUniqueId())) e.setCancelled(true); }
