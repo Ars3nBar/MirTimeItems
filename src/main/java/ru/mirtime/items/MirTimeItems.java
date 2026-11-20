@@ -9,6 +9,10 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -18,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabCompleter {
+public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabCompleter, Listener {
 
     private NamespacedKey itemKey;
     private final Map<UUID, Map<String, Long>> cooldowns = new ConcurrentHashMap<>();
@@ -34,7 +38,8 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
         }
 
         Bukkit.getPluginManager().registerEvents(new ItemMechanics(this), this);
-        getLogger().info("MirTimeItems v2.6.0 (Белый список миров анархии) запущен!");
+        Bukkit.getPluginManager().registerEvents(this, this);
+        getLogger().info("MirTimeItems v2.6.0 (Белый список миров анархии, 30 предметов) запущен!");
     }
 
     public NamespacedKey getItemKey() {
@@ -68,7 +73,7 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
         if (loc == null || loc.getWorld() == null) return true;
         String wName = loc.getWorld().getName().toLowerCase();
 
-        // Белый список миров, где РАЗРЕШЕНЫ предметы
+        // Белый список миров, где РАЗРЕШЕНЫ все 30 артефактов
         List<String> allowedWorlds = getConfig().getStringList("allowed-worlds");
         if (allowedWorlds.isEmpty()) {
             allowedWorlds = List.of("world", "world_nether", "world_the_end", "anarchy");
@@ -112,21 +117,40 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
         return false;
     }
 
+    private void openCatalog(Player p) {
+        Inventory inv = Bukkit.createInventory(null, 36, color("&#0055ff&l⚡ &#00E5FF&lАРТЕФАКТЫ MIR-TIME (30)"));
+        for (int i = 0; i < ItemRegistry.ALL_IDS.size() && i < 36; i++) {
+            ItemStack item = ItemRegistry.create(itemKey, ItemRegistry.ALL_IDS.get(i), 1);
+            if (item != null) inv.setItem(i, item);
+        }
+        p.openInventory(inv);
+    }
+
+    @EventHandler
+    public void onCatalogClick(InventoryClickEvent e) {
+        if (!(e.getWhoClicked() instanceof Player p)) return;
+        if (!e.getView().getTitle().contains("АРТЕФАКТЫ MIR-TIME")) return;
+        e.setCancelled(true);
+        if (!p.hasPermission("mirtime.items.admin")) return;
+        ItemStack clicked = e.getCurrentItem();
+        if (clicked != null && !clicked.getType().isAir()) {
+            p.getInventory().addItem(clicked.clone());
+            p.sendMessage(getPrefix() + color("&#00FF66Предмет выдан в инвентарь!"));
+        }
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         List<String> list = List.of(args);
 
         if (list.isEmpty()) {
-            if (sender instanceof Player p) {
-                ItemRegistry.openGui(p, this);
-            } else {
-                sender.sendMessage("Используйте: /mtitems give <игрок> <предмет> [кол-во]");
-            }
+            if (sender instanceof Player p) openCatalog(p);
+            else sender.sendMessage("Используйте: /mtitems give <игрок> <предмет> [кол-во]");
             return true;
         }
 
         if (list.get(0).equalsIgnoreCase("gui") && sender instanceof Player p) {
-            ItemRegistry.openGui(p, this);
+            openCatalog(p);
             return true;
         }
 
@@ -147,7 +171,7 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
                 try { amount = Math.max(1, Math.min(64, Integer.parseInt(list.get(3)))); } catch (Exception ignored) {}
             }
 
-            ItemStack item = ItemRegistry.getItem(this, id, amount);
+            ItemStack item = ItemRegistry.create(itemKey, id, amount);
             if (item == null) {
                 sender.sendMessage(getPrefix() + color("&cПредмет не найден!"));
                 return true;
@@ -165,7 +189,7 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
     public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
         if (args.length == 1) return List.of("gui", "give");
         if (args.length == 2 && args[0].equalsIgnoreCase("give")) return null;
-        if (args.length == 3 && args[0].equalsIgnoreCase("give")) return ItemRegistry.getAllIds();
+        if (args.length == 3 && args[0].equalsIgnoreCase("give")) return ItemRegistry.ALL_IDS;
         return List.of();
     }
 
