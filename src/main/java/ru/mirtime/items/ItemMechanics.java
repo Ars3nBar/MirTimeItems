@@ -258,6 +258,12 @@ public class ItemMechanics implements Listener {
                     runTimedBoss(p.getLocation().clone());
                 }
             }
+            case "armageddon_beacon" -> {
+                if (checkCooldown(p, id, 120)) {
+                    consumeOne(p, is);
+                    runArmageddon(p, p.getLocation().getBlock().getLocation());
+                }
+            }
             case "meteor_staff" -> {
                 if (checkCooldown(p, id, 25)) {
                     Block target = p.getTargetBlockExact(50);
@@ -561,6 +567,7 @@ public class ItemMechanics implements Listener {
             }
         }
     }
+
     @EventHandler
     public void onBreak(BlockBreakEvent e) {
         Player p = e.getPlayer();
@@ -609,6 +616,7 @@ public class ItemMechanics implements Listener {
     public void onDeath(EntityDeathEvent e) {
         if (summonedBosses.remove(e.getEntity().getUniqueId()) && e.getEntity().getKiller() != null) {
             Player k = e.getEntity().getKiller();
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + k.getName() + " 2500");
             for (String cmd : plugin.getConfig().getStringList("totem.rewards")) {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%player%", k.getName()));
             }
@@ -623,7 +631,6 @@ public class ItemMechanics implements Listener {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "eco give " + killer.getName() + " 250");
         }
     }
-
     private void buildStylishTrap(Player p, int r, int sec, boolean neon) {
         Location c = p.getLocation().getBlock().getLocation();
         Location center = c.clone().add(0.5, 0, 0.5);
@@ -737,6 +744,137 @@ public class ItemMechanics implements Listener {
                     bar.removeAll();
                 }
                 secLeft--;
+            }
+        }.runTaskTimer(plugin, 0L, 20L);
+    }
+    private void runArmageddon(Player caller, Location impact) {
+        World w = impact.getWorld();
+        if (w == null) return;
+
+        Block centerBlock = impact.getBlock();
+        centerBlock.setType(Material.RESPAWN_ANCHOR);
+
+        String title = MirTimeItems.color("&#FF2A55&l☄ АРМАГЕДОН &8| &fУдар через: &#FFD70020 сек.");
+        BossBar bar = Bukkit.createBossBar(title, BarColor.RED, BarStyle.SEGMENTED_20);
+        for (Player pl : w.getPlayers()) {
+            if (pl.getLocation().distanceSquared(impact) <= 10000) {
+                bar.addPlayer(pl);
+                pl.sendMessage(MirTimeItems.color(plugin.getPrefix() + "&#FF2A55&lВНИМАНИЕ! &fИгрок &#00E5FF" + caller.getName() + " &fвызвал &#FF2A55&lМЕТЕОРИТ &fна координатах &e" + impact.getBlockX() + ", " + impact.getBlockY() + ", " + impact.getBlockZ() + "&f!"));
+            }
+        }
+        w.playSound(impact, Sound.EVENT_RAID_HORN, 3.0f, 0.5f);
+
+        new BukkitRunnable() {
+            int secLeft = 20;
+
+            @Override
+            public void run() {
+                if (secLeft > 0) {
+                    bar.setProgress(Math.max(0.0, secLeft / 20.0));
+                    bar.setTitle(MirTimeItems.color("&#FF2A55&l☄ АРМАГЕДОН &8| &fУдар через: &#FFD700" + secLeft + " сек."));
+
+                    double meteorY = impact.getY() + (secLeft * 3.5);
+                    Location meteorLoc = new Location(w, impact.getX() + 0.5, meteorY, impact.getZ() + 0.5);
+
+                    w.spawnParticle(Particle.EXPLOSION_EMITTER, meteorLoc, 2, 1.2, 1.2, 1.2, 0.05);
+                    w.spawnParticle(Particle.FLAME, meteorLoc, 140, 2.5, 2.5, 2.5, 0.15);
+                    w.spawnParticle(Particle.LAVA, meteorLoc, 50, 2.0, 2.0, 2.0, 0.1);
+
+                    for (int y = 0; y < 35; y += 2) {
+                        w.spawnParticle(Particle.SOUL_FIRE_FLAME, impact.clone().add(0.5, y, 0.5), 6, 0.25, 0.2, 0.25, 0.01);
+                    }
+                    if (secLeft <= 5) {
+                        w.spawnParticle(Particle.FLASH, impact.clone().add(0.5, 1.5, 0.5), 2);
+                        w.playSound(impact, Sound.ENTITY_WARDEN_HEARTBEAT, 2.5f, 1.5f);
+                    } else if (secLeft % 4 == 0) {
+                        w.playSound(impact, Sound.ENTITY_BLAZE_AMBIENT, 2.0f, 0.5f);
+                    }
+                    secLeft--;
+                } else {
+                    cancel();
+                    bar.removeAll();
+                    if (centerBlock.getType() == Material.RESPAWN_ANCHOR) centerBlock.setType(Material.AIR);
+
+                    w.spawnParticle(Particle.EXPLOSION_EMITTER, impact, 15, 6, 4, 6, 0.2);
+                    w.spawnParticle(Particle.FLASH, impact.clone().add(0, 2, 0), 8);
+                    w.playSound(impact, Sound.ENTITY_GENERIC_EXPLODE, 4.0f, 0.4f);
+                    w.playSound(impact, Sound.ENTITY_WITHER_SPAWN, 2.5f, 0.5f);
+
+                    for (int i = 0; i < 6; i++) {
+                        double angle = (Math.PI * 2 / 6) * i;
+                        w.strikeLightningEffect(impact.clone().add(Math.cos(angle) * 8, 0, Math.sin(angle) * 8));
+                    }
+
+                    for (Entity ent : w.getNearbyEntities(impact, 18, 18, 18)) {
+                        if (ent instanceof LivingEntity le && !ent.equals(caller)) {
+                            Vector knock = le.getLocation().toVector().subtract(impact.toVector()).normalize().multiply(2.4).setY(1.2);
+                            le.setVelocity(knock);
+                            le.setFireTicks(160);
+                            le.damage(14.0, caller);
+                        }
+                    }
+
+                    int r = 15;
+                    Random rnd = new Random();
+                    for (int x = -r; x <= r; x++) {
+                        for (int y = -8; y <= 10; y++) {
+                            for (int z = -r; z <= r; z++) {
+                                double dist = Math.sqrt(x * x + (y * 1.4) * (y * 1.4) + z * z);
+                                if (dist > r) continue;
+
+                                Block b = impact.clone().add(x, y, z).getBlock();
+                                if (b.getType() == Material.BEDROCK || b.getType() == Material.END_PORTAL_FRAME) continue;
+                                if (plugin.isBlocked(b.getLocation())) continue;
+
+                                if (dist < r - 1.5) {
+                                    b.setType(Material.AIR);
+                                } else {
+                                    int roll = rnd.nextInt(100);
+                                    if (Math.abs(x) <= 2 && Math.abs(z) <= 2 && y <= -5 && roll < 25) {
+                                        b.setType(Material.ANCIENT_DEBRIS);
+                                    } else if (roll < 35) {
+                                        b.setType(Material.MAGMA_BLOCK);
+                                    } else if (roll < 65) {
+                                        b.setType(Material.OBSIDIAN);
+                                    } else {
+                                        b.setType(Material.NETHERRACK);
+                                    }
+                                    if (y < 0 && b.getRelative(0, 1, 0).getType().isAir() && rnd.nextInt(100) < 25) {
+                                        b.getRelative(0, 1, 0).setType(Material.FIRE);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Location spawnBase = impact.clone().add(0.5, -4, 0.5);
+                    for (int i = 0; i < 2; i++) {
+                        Ravager rav = (Ravager) w.spawnEntity(spawnBase.clone().add(i * 3 - 1.5, 0, 0), EntityType.RAVAGER);
+                        rav.setCustomName(MirTimeItems.color("&#FF2A55&l☄ Титан Метеорита"));
+                        rav.setCustomNameVisible(true);
+                        rav.setGlowing(true);
+                        summonedBosses.add(rav.getUniqueId());
+                    }
+                    for (int i = 0; i < 4; i++) {
+                        WitherSkeleton ws = (WitherSkeleton) w.spawnEntity(spawnBase.clone().add(rnd.nextInt(7) - 3, 0, rnd.nextInt(7) - 3), EntityType.WITHER_SKELETON);
+                        ws.setCustomName(MirTimeItems.color("&#FF8800&l🔥 Страж Кратера"));
+                        ws.setCustomNameVisible(true);
+                        ws.setGlowing(true);
+                        if (ws.getEquipment() != null) {
+                            ws.getEquipment().setHelmet(new ItemStack(Material.NETHERITE_HELMET));
+                            ws.getEquipment().setChestplate(new ItemStack(Material.NETHERITE_CHESTPLATE));
+                            ws.getEquipment().setItemInMainHand(new ItemStack(Material.NETHERITE_SWORD));
+                        }
+                        summonedBosses.add(ws.getUniqueId());
+                    }
+                    for (int i = 0; i < 4; i++) {
+                        Blaze bl = (Blaze) w.spawnEntity(spawnBase.clone().add(rnd.nextInt(7) - 3, 2, rnd.nextInt(7) - 3), EntityType.BLAZE);
+                        bl.setCustomName(MirTimeItems.color("&#FFD700&l⚡ Осколок Солнца"));
+                        bl.setCustomNameVisible(true);
+                        bl.setGlowing(true);
+                        summonedBosses.add(bl.getUniqueId());
+                    }
+                }
             }
         }.runTaskTimer(plugin, 0L, 20L);
     }
