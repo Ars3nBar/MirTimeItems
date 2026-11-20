@@ -14,11 +14,16 @@ import java.util.List;
 public class ItemRegistry {
 
     public static final List<String> ALL_IDS = List.of(
+            // Старые 30
             "cataclysm", "vampire_blade", "thor_axe", "midas_sword", "frost_staff", "gravity_mace", "soul_reaper", "snipe_bow",
             "trapka", "mega_trap", "flash_pearl", "disorient", "divine_aura", "web_bomb", "escape_feather", "cleanse_totem",
             "totem", "warden_horn", "loot_flare",
             "drill_pickaxe", "magnet_pickaxe", "obsidian_breaker", "spawner_silk", "farmer_hoe",
-            "hermes_boots", "titan_chest", "dragon_elytra", "talisman_rage", "talisman_speed", "talisman_wealth"
+            "hermes_boots", "titan_chest", "dragon_elytra", "talisman_rage", "talisman_speed", "talisman_wealth",
+            // Новые 15 мега-артефактов
+            "meteor_staff", "black_hole", "bedrock_shield", "lightning_trident", "shadow_cloak",
+            "vortex_hook", "nuke_tnt", "lava_prison", "midas_touch", "dragon_breath_bomb",
+            "chrono_watch", "berserk_axe", "xray_compass", "auto_bridge", "phoenix_totem"
     );
 
     public static ItemStack create(NamespacedKey key, String id, int amount) {
@@ -28,129 +33,54 @@ public class ItemRegistry {
         List<String> lore;
 
         switch (type) {
-            case "cataclysm" -> {
-                mat = Material.TNT; name = "&c&l[💥] &4&lЯдерный Схлоп";
-                lore = List.of("&7Создаёт чёрную дыру в радиусе &#00E5FF10 блоков&7,", "&7стягивает всех врагов в центр и взрывает!", "", "&#00FF66➥ ПКМ&f: активировать");
-            }
-            case "vampire_blade" -> {
-                mat = Material.NETHERITE_SWORD; name = "&4&l[🩸] &c&lКлинок Кровавой Луны";
-                lore = List.of("&7Вытягивает душу из врага при ударе:", "&7восстанавливает &#00FF6630% &7от нанесённого урона.", "", "&cОстрота VI | Вампиризм");
-            }
-            case "thor_axe" -> {
-                mat = Material.NETHERITE_AXE; name = "&#00E5FF&l[⚡] &b&lГнев Перуна";
-                lore = List.of("&7При ударе обрушивает небесную молнию,", "&7пробивающую броню врага чистым уроном!", "", "&eПерезарядка: &f10 сек.");
-            }
-            case "midas_sword" -> {
-                mat = Material.GOLDEN_SWORD; name = "&#FFD700&l[👑] &6&lКлинок Алчности";
-                lore = List.of("&7Озолотит любого убийцу:", "&7выбивает &#FFD700+1.000 монет &7с каждого фрага.", "", "&eНеразрушимый артефакт");
-            }
-            case "frost_staff" -> {
-                mat = Material.BREEZE_ROD; name = "&#00E5FF&l[❄] &b&lЛедяной Скипетр";
-                lore = List.of("&7Выпускает ледяную волну в радиусе &#00E5FF9 блоков&7:", "&7вмораживает врагов в лёд на 4 секунды!", "", "&#00FF66➥ ПКМ&f: ледяной шторм");
-            }
-            case "gravity_mace" -> {
-                mat = Material.MACE; name = "&#9400d3&l[🌀] &d&lМолот Сингулярности";
-                lore = List.of("&7Создаёт ударную волну, подбрасывающую", "&7всех противников вокруг в стратосферу!", "", "&#00FF66➥ ПКМ&f: ударная волна");
-            }
-            case "soul_reaper" -> {
-                mat = Material.NETHERITE_HOE; name = "&8&l[☠] &5&lЖнец Душ";
-                lore = List.of("&7Касание смерти: накладывает Иссушение II,", "&7Слепоту и Утомление на 4 секунды.", "", "&5Острота VII");
-            }
-            case "snipe_bow" -> {
-                mat = Material.BOW; name = "&#00FF66&l[🎯] &a&lЛук «Фантом»";
-                lore = List.of("&7Стрелы летят со скоростью света по прямой", "&7и оставляют за собой неоновый след!", "", "&aСила VI | Бесконечность");
-            }
-            case "trapka" -> {
-                mat = Material.NETHERITE_SCRAP; name = "&#0055ff&l[📦] &#00E5FF&lТрапка";
-                lore = List.of("&7Мгновенно запирает вас и врага", "&7в нерушимую коробку 5×5×5 на &#00FF6618 сек.&7!", "", "&#00FF66➥ ПКМ&f: поставить трапку");
-            }
-            case "mega_trap" -> {
-                mat = Material.CRYING_OBSIDIAN; name = "&#9400d3&l[🏰] &d&lПласт-Цитадель";
-                lore = List.of("&7Возводит гигантский купол 7×7×7", "&7из плачущего обсидиана на &#00FF6625 сек.&7!", "", "&#00FF66➥ ПКМ&f: возвести купол");
-            }
-            case "flash_pearl" -> {
-                mat = Material.ENDER_EYE; name = "&#00E5FF&l[👁] &b&lОко Пустоты";
-                lore = List.of("&7Мгновенный блинк в точку взгляда", "&7до &#00E5FF35 блоков &7сквозь пространство без урона!", "", "&#00FF66➥ ПКМ&f: совершить скачок");
-            }
-            case "disorient" -> {
-                mat = Material.ENDER_PEARL; name = "&c&l[💫] &e&lДезориентация";
-                lore = List.of("&7Взрывается вспышкой в радиусе 10 блоков:", "&7ослепляет и оглушает всех врагов на 6 сек.!", "", "&#00FF66➥ ПКМ&f: ослепить врагов");
-            }
-            case "divine_aura" -> {
-                mat = Material.NETHER_STAR; name = "&#FFD700&l[🛡] &e&lЭгида Бессмертия";
-                lore = List.of("&7Активирует золотой купол защиты:", "&7Сопротивление IV и Регенерация III на 5 сек.", "", "&#00FF66➥ ПКМ&f: активировать щит");
-            }
-            case "web_bomb" -> {
-                mat = Material.COBWEB; name = "&f&l[🕸] &7&lПаутинный Кокон";
-                lore = List.of("&7Намертво запутывает ближайшего врага", "&7в плотную паутину 3×3 в радиусе 9 блоков!", "", "&#00FF66➥ ПКМ&f: бросить кокон");
-            }
-            case "escape_feather" -> {
-                mat = Material.FEATHER; name = "&#FFD700&l[🔥] &6&lПеро Феникса";
-                lore = List.of("&7Огненный рывок в небеса с оставлением", "&7шлейфа пламени и Плавным падением!", "", "&#00FF66➥ ПКМ&f: взлететь");
-            }
-            case "cleanse_totem" -> {
-                mat = Material.GLISTERING_MELON_SLICE; name = "&#00FF66&l[✨] &a&lСлеза Ангела";
-                lore = List.of("&7Мгновенно снимает все дебаффы,", "&7тушит огонь и восстанавливает 5 сердец!", "", "&#00FF66➥ ПКМ&f: очиститься");
-            }
-            case "totem" -> {
-                mat = Material.TOTEM_OF_UNDYING; name = "&#0055ff&l[🔥] &#00FF66&lТотем Призыва Босса";
-                lore = List.of("&7Запускает 20-секундный огненный ритуал", "&7и призывает Порождение Бездны с наградой!", "", "&#00FF66➥ ПКМ&f: начать ритуал");
-            }
-            case "warden_horn" -> {
-                mat = Material.GOAT_HORN; name = "&#0055ff&l[📯] &3&lРог Разрушения";
-                lore = List.of("&7Зовёт из глубин разъяренного Разрушителя", "&7на 30 секунд в гущу сражения!", "", "&#00FF66➥ ПКМ&f: протрубить");
-            }
-            case "loot_flare" -> {
-                mat = Material.FIREWORK_ROCKET; name = "&#FFD700&l[🎆] &e&lСигнальная Шашка";
-                lore = List.of("&7Вызывает с неба личный Аирдроп", "&7с алмазами, чарками и пузырьками опыта!", "", "&#00FF66➥ ПКМ&f: вызвать дроп");
-            }
-            case "drill_pickaxe" -> {
-                mat = Material.NETHERITE_PICKAXE; name = "&#00E5FF&l[⛏] &b&lБур «Крот» 3×3";
-                lore = List.of("&7Прогрызает туннели &#00FF663×3 блока", "&7одним ударом! Лучший друг рейдера.", "", "&bЭффективность VII | Прочность V");
-            }
-            case "magnet_pickaxe" -> {
-                mat = Material.DIAMOND_PICKAXE; name = "&#FFD700&l[🧲] &e&lКирка-Магнит";
-                lore = List.of("&7Мгновенно переплавляет добытые руды", "&7и телепортирует весь лут прямо в рюкзак!", "", "&eУдача IV | Авто-переплавка");
-            }
-            case "obsidian_breaker" -> {
-                mat = Material.GOLDEN_PICKAXE; name = "&c&l[💣] &4&lКрушитель Обсидиана";
-                lore = List.of("&7С одного удара ломает любой обсидиан!", "&7Запас прочности: &c32 блока&7.", "", "&#00FF66➥ ЛКМ по обсидиану");
-            }
-            case "spawner_silk" -> {
-                mat = Material.IRON_PICKAXE; name = "&#9400d3&l[🕷] &d&lКирка Похитителя Спавнеров";
-                lore = List.of("&7Позволяет аккуратно вырезать &d1 спавнер&7,", "&7после чего рассыпается в пыль.", "", "&cОдноразовый артефакт");
-            }
-            case "farmer_hoe" -> {
-                mat = Material.DIAMOND_HOE; name = "&#00FF66&l[🌾] &a&lКоса Урожая 5×5";
-                lore = List.of("&7Собирает посевы в радиусе &#00FF665×5 блоков", "&7с увеличенным выпадением ресурсов!", "", "&aУдача V");
-            }
-            case "hermes_boots" -> {
-                mat = Material.NETHERITE_BOOTS; name = "&#00E5FF&l[👟] &b&lСкороходы Гермеса";
-                lore = List.of("&7Даруют постоянную Скорость II", "&7и полную неуязвимость к падению с высоты!", "", "&bЗащита V | Невесомость V");
-            }
-            case "titan_chest" -> {
-                mat = Material.NETHERITE_CHESTPLATE; name = "&#FFD700&l[🦺] &6&lКираса Джаггернаута";
-                lore = List.of("&7Добавляет владельцу &#00FF66+4 сердца (28 HP)", "&7и постоянное Сопротивление урону I!", "", "&6Защита V | Прочность V");
-            }
-            case "dragon_elytra" -> {
-                mat = Material.ELYTRA; name = "&#9400d3&l[🐉] &d&lКрылья Пустоты";
-                lore = List.of("&7Неразрушимые элитры со встроенным", "&7реактивным ускорителем на кнопку &#00FF66Shift&7!", "", "&dНеразрушимость");
-            }
-            case "talisman_rage" -> {
-                mat = Material.RED_DYE; name = "&c&l[🔥] &4&lТалисман Берсерка";
-                lore = List.of("&7В левой руке наполняет яростью:", "&7даёт постоянный эффект &cСилы II&7!", "", "&7Активен в левой руке");
-            }
-            case "talisman_speed" -> {
-                mat = Material.LIGHT_BLUE_DYE; name = "&#00E5FF&l[💨] &b&lТалисман Урагана";
-                lore = List.of("&7В левой руке ускоряет движения:", "&7даёт &#00E5FFСкорость II &7и &#00FF66Спешку II&7!", "", "&7Активен в левой руке");
-            }
-            case "talisman_wealth" -> {
-                mat = Material.GOLD_NUGGET; name = "&#FFD700&l[💰] &e&lТалисман Магната";
-                lore = List.of("&7В левой руке притягивает богатство:", "&7удваивает опыт и даёт монеты за мобов!", "", "&7Активен в левой руке");
-            }
+            case "cataclysm" -> { mat = Material.NETHER_STAR; name = "&#FF2A55&l💥 Ядерный Схлоп"; lore = List.of("&7Притягивает врагов в радиусе 10 блоков", "&7и устраивает мощный взрыв.", "", "&#00FF66▶ ПКМ для активации"); }
+            case "vampire_blade" -> { mat = Material.NETHERITE_SWORD; name = "&c&l🩸 Клинок Вампира"; lore = List.of("&7Восстанавливает 30% от нанесённого", "&7урона в виде здоровья."); }
+            case "thor_axe" -> { mat = Material.NETHERITE_AXE; name = "&#00E5FF&l⚡ Молот Тора"; lore = List.of("&7При ударе бьёт врага молнией", "&7и наносит дополнительный урон."); }
+            case "midas_sword" -> { mat = Material.GOLDEN_SWORD; name = "&#FFD700&l🪙 Меч Мидаса"; lore = List.of("&7Даёт +1.000 Монет за каждое убийство."); }
+            case "frost_staff" -> { mat = Material.BLAZE_ROD; name = "&#00E5FF&l❄ Ледяной Посох"; lore = List.of("&7Вмораживает всех врагов вокруг в лёд.", "", "&#00FF66▶ ПКМ для активации"); }
+            case "gravity_mace" -> { mat = Material.MACE; name = "&d&l🌀 Грави-Булава"; lore = List.of("&7Подбрасывает всех врагов вокруг в воздух.", "", "&#00FF66▶ ПКМ для активации"); }
+            case "soul_reaper" -> { mat = Material.NETHERITE_HOE; name = "&5&l☠ Коса Душ"; lore = List.of("&7Накладывает Иссушение, Слепоту и Утомление."); }
+            case "snipe_bow" -> { mat = Material.BOW; name = "&#00FF66&l🎯 Снайперский Лук"; lore = List.of("&7Стрелы летят по прямой без гравитации."); }
+            case "trapka" -> { mat = Material.OBSIDIAN; name = "&#0055ff&l⬛ Обсидиановая Трапка"; lore = List.of("&7Запирает вас и врага в кубе 5x5 на 18 сек.", "", "&#00FF66▶ ПКМ для активации"); }
+            case "mega_trap" -> { mat = Material.CRYING_OBSIDIAN; name = "&5&l🟪 Мега-Трапка Бездны"; lore = List.of("&7Огромный куб 7x7 из плачущего обсидиана на 25 сек.", "", "&#00FF66▶ ПКМ для активации"); }
+            case "flash_pearl" -> { mat = Material.ENDER_PEARL; name = "&#00E5FF&l⚡ Мгновенный Пёрл"; lore = List.of("&7Мгновенно телепортирует в точку взгляда (до 35 бл).", "", "&#00FF66▶ ПКМ для телепорта"); }
+            case "disorient" -> { mat = Material.ENDER_EYE; name = "&e&l👁 Дезориентация"; lore = List.of("&7Ослепляет и замедляет всех врагов вокруг.", "", "&#00FF66▶ ПКМ для активации"); }
+            case "divine_aura" -> { mat = Material.GOLDEN_APPLE; name = "&#FFD700&l✨ Божественная Аура"; lore = List.of("&7Даёт Сопротивление IV и Регенерацию III.", "", "&#00FF66▶ ПКМ для активации"); }
+            case "web_bomb" -> { mat = Material.COBWEB; name = "&f&l🕸 Паутинная Бомба"; lore = List.of("&7Опутывает ближайшего врага в кокон из паутины.", "", "&#00FF66▶ ПКМ для броска"); }
+            case "escape_feather" -> { mat = Material.FEATHER; name = "&#00FF66&l🕊 Перо Побега"; lore = List.of("&7Мощный рывок вперёд и вверх + Плавное падение.", "", "&#00FF66▶ ПКМ для рывка"); }
+            case "cleanse_totem" -> { mat = Material.TOTEM_OF_UNDYING; name = "&#00E5FF&l💧 Тотем Очищения"; lore = List.of("&7Снимает все негативные эффекты и лечит 5 сердец.", "", "&#00FF66▶ ПКМ для активации"); }
+            case "totem" -> { mat = Material.RESPAWN_ANCHOR; name = "&#0055ff&l☠ Тотем Призыва Босса"; lore = List.of("&7Начинает ритуал призыва Порождения Бездны.", "", "&#00FF66▶ ПКМ для ритуала"); }
+            case "warden_horn" -> { mat = Material.GOAT_HORN; name = "&3&l📯 Рог Бездны"; lore = List.of("&7Призывает Разорителя на 30 секунд.", "", "&#00FF66▶ ПКМ для призыва"); }
+            case "loot_flare" -> { mat = Material.FIREWORK_ROCKET; name = "&#FFD700&l🎆 Сигнальная Ракета Лута"; lore = List.of("&7Сбрасывает алмазы, яблоки и опыт.", "", "&#00FF66▶ ПКМ для вызова"); }
+            case "drill_pickaxe" -> { mat = Material.NETHERITE_PICKAXE; name = "&#FF2A55&l⛏ Бур 3x3"; lore = List.of("&7Копает туннель 3x3x3 одним ударом."); }
+            case "magnet_pickaxe" -> { mat = Material.DIAMOND_PICKAXE; name = "&#00E5FF&l🧲 Магнитная Кирка"; lore = List.of("&7Авто-переплавка руды сразу в инвентарь."); }
+            case "obsidian_breaker" -> { mat = Material.GOLDEN_PICKAXE; name = "&5&l🔨 Крушитель Обсидиана"; lore = List.of("&7Ломает обсидиан с 1 удара ЛКМ (32 заряда)."); }
+            case "spawner_silk" -> { mat = Material.IRON_PICKAXE; name = "&#00FF66&l🕸 Кирка Спавнеров"; lore = List.of("&7Добывает спавнер с мобом (одноразовая)."); }
+            case "farmer_hoe" -> { mat = Material.DIAMOND_HOE; name = "&#00FF66&l🌾 Мотыга Фермера 5x5"; lore = List.of("&7Собирает урожай в радиусе 5x5."); }
+            case "hermes_boots" -> { mat = Material.NETHERITE_BOOTS; name = "&#00E5FF&l👟 Ботинки Гермеса"; lore = List.of("&7Скорость II и полный иммунитет к падению."); }
+            case "titan_chest" -> { mat = Material.NETHERITE_CHESTPLATE; name = "&#0055ff&l🛡 Нагрудник Титана"; lore = List.of("&7Даёт +4 сердца (28 HP) и Сопротивление."); }
+            case "dragon_elytra" -> { mat = Material.ELYTRA; name = "&d&l🐉 Элитры Дракона"; lore = List.of("&7Нажмите Shift в полёте для ускорения."); }
+            case "talisman_rage" -> { mat = Material.RED_DYE; name = "&c&l🔥 Талисман Ярости"; lore = List.of("&7В левой руке: Сила II."); }
+            case "talisman_speed" -> { mat = Material.LIGHT_BLUE_DYE; name = "&#00E5FF&l⚡ Талисман Скорости"; lore = List.of("&7В левой руке: Скорость II и Спешка II."); }
+            case "talisman_wealth" -> { mat = Material.GOLD_NUGGET; name = "&#FFD700&l💰 Талисман Богатства"; lore = List.of("&7В левой руке: x2 опыт и +250 Монет за мобов."); }
+            // === 15 НОВЫХ МЕГА-АРТЕФАКТОВ ===
+            case "meteor_staff" -> { mat = Material.FIRE_CHARGE; name = "&#FF5500&l☄ Посох Метеорита"; lore = List.of("&7Обрушивает с неба пылающий метеорит", "&7в точку вашего прицела!", "", "&#00FF66▶ ПКМ для вызова метеорита"); }
+            case "black_hole" -> { mat = Material.ENDER_CHEST; name = "&5&l🌌 Сингулярность (Чёрная Дыра)"; lore = List.of("&7Создаёт воронку на 5 сек, затягивающую", "&7всех врагов в центр и наносящую урон.", "", "&#00FF66▶ ПКМ для запуска"); }
+            case "bedrock_shield" -> { mat = Material.BEACON; name = "&#00E5FF&l🛡 Эгида Титана"; lore = List.of("&7Строит укреплённый защитный купол", "&7с регенерацией внутри на 12 сек.", "", "&#00FF66▶ ПКМ для защиты"); }
+            case "lightning_trident" -> { mat = Material.TRIDENT; name = "&#00E5FF&l🔱 Трезубец Посейдона"; lore = List.of("&7При ударе бьёт серией из 3 молний", "&7по всем врагам в радиусе 8 блоков."); }
+            case "shadow_cloak" -> { mat = Material.PHANTOM_MEMBRANE; name = "&8&l👤 Плащ Тени"; lore = List.of("&7Полная невидимость на 8 секунд", "&7для скрытной атаки в спину.", "", "&#00FF66▶ ПКМ для ухода в тень"); }
+            case "vortex_hook" -> { mat = Material.FISHING_ROD; name = "&d&l🪝 Гарпун Бездны"; lore = List.of("&7Притягивает врага из прицела (до 25 бл)", "&7прямо к вам для комбо-удара!", "", "&#00FF66▶ ПКМ по врагу"); }
+            case "nuke_tnt" -> { mat = Material.TNT; name = "&#FF2A55&l☢ Термоядерный Заряд"; lore = List.of("&7Взрыв через 3 сек, который пробивает", "&7даже обсидиан и базы в радиусе 4 бл!", "", "&#00FF66▶ ПКМ для установки"); }
+            case "lava_prison" -> { mat = Material.MAGMA_BLOCK; name = "&#FF5500&l🔥 Огненная Клетка"; lore = List.of("&7Запирает ближайшего врага в клетку", "&7из магмы и лавы на 10 секунд!", "", "&#00FF66▶ ПКМ по врагу"); }
+            case "midas_touch" -> { mat = Material.GOLD_INGOT; name = "&#FFD700&l✋ Рука Мидаса"; lore = List.of("&7Превращает землю под врагом в золото", "&7и забирает у него 2.500 Монет!", "", "&#00FF66▶ ПКМ по врагу"); }
+            case "dragon_breath_bomb" -> { mat = Material.DRAGON_BREATH; name = "&d&l🐉 Сфера Дыхания Дракона"; lore = List.of("&7Создаёт ядовитое облако на 8 сек,", "&7наносящее магический урон врагам.", "", "&#00FF66▶ ПКМ для активации"); }
+            case "chrono_watch" -> { mat = Material.CLOCK; name = "&#00E5FF&l⏳ Часы Хроноса"; lore = List.of("&7Запоминает вашу позицию и HP, а через", "&75 сек возвращает вас назад во времени!", "", "&#00FF66▶ ПКМ для перемотки"); }
+            case "berserk_axe" -> { mat = Material.DIAMOND_AXE; name = "&c&l🪓 Секира Берсерка"; lore = List.of("&7Наносит до +120% урона, когда у вас", "&7остаётся меньше 4 сердец здоровья!"); }
+            case "xray_compass" -> { mat = Material.RECOVERY_COMPASS; name = "&#00FF66&l👁 Око Охотника"; lore = List.of("&7Подсвечивает всех игроков в радиусе", "&780 блоков сквозь стены на 15 секунд!", "", "&#00FF66▶ ПКМ для сканирования"); }
+            case "auto_bridge" -> { mat = Material.CRYING_OBSIDIAN; name = "&#0055ff&l🌉 Мост Строителя"; lore = List.of("&7Мгновенно строит перед вами мост", "&7из обсидиана длиной 20 блоков.", "", "&#00FF66▶ ПКМ для постройки"); }
+            case "phoenix_totem" -> { mat = Material.BLAZE_POWDER; name = "&#FF8800&l🔥 Перо Феникса (Пассив)"; lore = List.of("&7Лежит в инвентаре: спасает от смерти,", "&7взрывает врагов огнём и подкидывает в небо!"); }
             default -> { return null; }
         }
-
         ItemStack is = new ItemStack(mat, amount);
         ItemMeta meta = is.getItemMeta();
         if (meta != null) {
@@ -161,9 +91,11 @@ public class ItemRegistry {
             meta.addEnchant(Enchantment.UNBREAKING, 3, true);
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
 
-            if (type.equals("midas_sword") || type.equals("dragon_elytra")) meta.setUnbreakable(true);
+            if (type.equals("midas_sword") || type.equals("dragon_elytra") || type.equals("berserk_axe")) meta.setUnbreakable(true);
             if (type.equals("vampire_blade")) meta.addEnchant(Enchantment.SHARPNESS, 6, true);
             if (type.equals("soul_reaper")) meta.addEnchant(Enchantment.SHARPNESS, 7, true);
+            if (type.equals("berserk_axe")) meta.addEnchant(Enchantment.SHARPNESS, 6, true);
+            if (type.equals("lightning_trident")) meta.addEnchant(Enchantment.IMPALING, 5, true);
             if (type.equals("snipe_bow")) {
                 meta.addEnchant(Enchantment.POWER, 6, true);
                 meta.addEnchant(Enchantment.INFINITY, 1, true);
