@@ -39,7 +39,7 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
 
         Bukkit.getPluginManager().registerEvents(new ItemMechanics(this), this);
         Bukkit.getPluginManager().registerEvents(this, this);
-        getLogger().info("MirTimeItems v2.6.0 (Белый список миров анархии, 30 предметов) запущен!");
+        getLogger().info("MirTimeItems v3.0.0 (45 мега-артефактов, белый список миров) запущен!");
     }
 
     public NamespacedKey getItemKey() {
@@ -73,10 +73,9 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
         if (loc == null || loc.getWorld() == null) return true;
         String wName = loc.getWorld().getName().toLowerCase();
 
-        // Белый список миров, где РАЗРЕШЕНЫ все 30 артефактов
         List<String> allowedWorlds = getConfig().getStringList("allowed-worlds");
         if (allowedWorlds.isEmpty()) {
-            allowedWorlds = List.of("world", "world_nether", "world_the_end", "anarchy");
+            allowedWorlds = List.of("mir", "mir_nether", "mir_the_end", "world", "world_nether", "world_the_end", "anarchy");
         } else {
             List<String> lower = new ArrayList<>();
             for (String w : allowedWorlds) lower.add(w.toLowerCase());
@@ -87,7 +86,6 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
             return true;
         }
 
-        // Проверка привата spawn / hub через Reflection
         try {
             if (Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
                 Class<?> wgClass = Class.forName("com.sk89q.worldguard.WorldGuard");
@@ -118,8 +116,8 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
     }
 
     private void openCatalog(Player p) {
-        Inventory inv = Bukkit.createInventory(null, 36, color("&#0055ff&l⚡ &#00E5FF&lАРТЕФАКТЫ MIR-TIME (30)"));
-        for (int i = 0; i < ItemRegistry.ALL_IDS.size() && i < 36; i++) {
+        Inventory inv = Bukkit.createInventory(null, 54, color("&#0055ff&l⚡ &#00E5FF&lАРТЕФАКТЫ MIR-TIME (45)"));
+        for (int i = 0; i < ItemRegistry.ALL_IDS.size() && i < 54; i++) {
             ItemStack item = ItemRegistry.create(itemKey, ItemRegistry.ALL_IDS.get(i), 1);
             if (item != null) inv.setItem(i, item);
         }
