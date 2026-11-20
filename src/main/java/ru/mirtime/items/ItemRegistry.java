@@ -23,7 +23,7 @@ public class ItemRegistry {
             // Мега-артефакты (15)
             "meteor_staff", "black_hole", "bedrock_shield", "lightning_trident", "shadow_cloak",
             "vortex_hook", "nuke_tnt", "lava_prison", "midas_touch", "dragon_breath_bomb",
-            "chrono_watch", "berserk_axe", "xray_compass", "auto_bridge", "phoenix_totem",
+            "chrono_watch", "berserk_axe", "xray_compass", "auto_bridge", "phoenix_totem", "armageddon_beacon",
             // Кит «БОГ XV» (5)
             "god_helmet", "god_chestplate", "god_leggings", "god_boots", "god_sword",
             // Кит «ДЖЕК XV» (5)
@@ -41,6 +41,7 @@ public class ItemRegistry {
         List<String> lore;
 
         switch (type) {
+            case "armageddon_beacon" -> { mat = Material.RESPAWN_ANCHOR; name = "&#FF2A55&l☄ ЯДРО АРМАГЕДДОНА &8| &#FFD700&l100 🅧"; lore = List.of("&7Вызывает с орбиты гигантский метеорит!", "&7• Обратный отсчёт с неба: &e20 секунд", "&7• Выжигает кратер &c30×30 &7с обломками", "&7• Выпускает орду боссов-монстров", "", "&#00FF66▶ ПКМ для запуска Армагеддона"); }
             case "cataclysm" -> { mat = Material.NETHER_STAR; name = "&#FF2A55&l💥 Ядерный Схлоп"; lore = List.of("&7Притягивает врагов в радиусе 10 блоков", "&7и устраивает мощный взрыв.", "", "&#00FF66▶ ПКМ для активации"); }
             case "vampire_blade" -> { mat = Material.NETHERITE_SWORD; name = "&c&l🩸 Клинок Вампира"; lore = List.of("&7Восстанавливает 30% от нанесённого", "&7урона в виде здоровья."); }
             case "thor_axe" -> { mat = Material.NETHERITE_AXE; name = "&#00E5FF&l⚡ Молот Тора"; lore = List.of("&7При ударе бьёт врага молнией", "&7и наносит дополнительный урон."); }
