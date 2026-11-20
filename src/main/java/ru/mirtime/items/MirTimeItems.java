@@ -1,11 +1,5 @@
 package ru.mirtime.items;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.math.BlockVector3;
-import com.sk89q.worldguard.WorldGuard;
-import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import com.sk89q.worldguard.protection.regions.RegionContainer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -19,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -80,19 +75,30 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
             allowedWorlds = lower;
         }
 
-        // Если мир НЕ в списке разрешённых (например, мир game или duels) — блокируем
         if (!allowedWorlds.contains(wName)) {
             return true;
         }
 
-        // Дополнительно запрещаем только в приватах спавна (spawn / hub)
+        // Проверка привата spawn / hub через Reflection (не требует зависимости WorldGuard при компиляции)
         try {
             if (Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
-                RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-                RegionManager regions = container.get(BukkitAdapter.adapt(loc.getWorld()));
+                Class<?> wgClass = Class.forName("com.sk89q.worldguard.WorldGuard");
+                Object wg = wgClass.getMethod("getInstance").invoke(null);
+                Object platform = wgClass.getMethod("getPlatform").invoke(wg);
+                Object container = platform.getClass().getMethod("getRegionContainer").invoke(platform);
+
+                Class<?> adapterClass = Class.forName("com.sk89q.worldedit.bukkit.BukkitAdapter");
+                Object weWorld = adapterClass.getMethod("adapt", org.bukkit.World.class).invoke(null, loc.getWorld());
+                Object regions = container.getClass().getMethod("get", Class.forName("com.sk89q.worldedit.world.World")).invoke(container, weWorld);
+
                 if (regions != null) {
-                    for (ProtectedRegion reg : regions.getApplicableRegions(BlockVector3.at(loc.getX(), loc.getY(), loc.getZ()))) {
-                        if (reg.getId().equalsIgnoreCase("spawn") || reg.getId().equalsIgnoreCase("hub")) {
+                    Class<?> vecClass = Class.forName("com.sk89q.worldedit.math.BlockVector3");
+                    Object vec = vecClass.getMethod("at", double.class, double.class, double.class).invoke(null, loc.getX(), loc.getY(), loc.getZ());
+                    Object appRegions = regions.getClass().getMethod("getApplicableRegions", vecClass).invoke(regions, vec);
+
+                    for (Object reg : (Iterable<?>) appRegions) {
+                        String regId = (String) reg.getClass().getMethod("getId").invoke(reg);
+                        if ("spawn".equalsIgnoreCase(regId) || "hub".equalsIgnoreCase(regId)) {
                             return true;
                         }
                     }
@@ -102,6 +108,7 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
 
         return false;
     }
+
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         String prefix = color(getConfig().getString("prefix", "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "));
