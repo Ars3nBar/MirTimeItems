@@ -13,7 +13,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -21,29 +20,34 @@ import java.util.regex.Pattern;
 
 public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabCompleter {
 
-    public NamespacedKey ITEM_KEY;
+    private NamespacedKey itemKey;
     private final Map<UUID, Map<String, Long>> cooldowns = new ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        ITEM_KEY = new NamespacedKey(this, "mt_item_id");
+        itemKey = new NamespacedKey(this, "mt_item_id");
 
         if (getCommand("mtitems") != null) {
             getCommand("mtitems").setExecutor(this);
             getCommand("mtitems").setTabCompleter(this);
         }
 
-        ItemMechanics mechanics = new ItemMechanics(this);
-        Bukkit.getPluginManager().registerEvents(mechanics, this);
-        mechanics.startPassiveTask();
+        Bukkit.getPluginManager().registerEvents(new ItemMechanics(this), this);
+        getLogger().info("MirTimeItems v2.6.0 (Белый список миров анархии) запущен!");
+    }
 
-        getLogger().info("MirTimeItems v2.6.0 (Белый список миров анархии, 30 предметов) запущен!");
+    public NamespacedKey getItemKey() {
+        return itemKey;
+    }
+
+    public String getPrefix() {
+        return color(getConfig().getString("prefix", "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "));
     }
 
     public String getItemId(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return null;
-        return item.getItemMeta().getPersistentDataContainer().get(ITEM_KEY, PersistentDataType.STRING);
+        return item.getItemMeta().getPersistentDataContainer().get(itemKey, PersistentDataType.STRING);
     }
 
     public boolean checkCooldown(Player p, String id, int seconds) {
@@ -53,8 +57,7 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
 
         if (now < end) {
             long left = (end - now) / 1000L + 1L;
-            String prefix = color(getConfig().getString("prefix", "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "));
-            p.sendMessage(prefix + color("&cПодождите &f" + left + " сек. &cперед повторным использованием!"));
+            p.sendMessage(getPrefix() + color("&cПодождите &f" + left + " сек. &cперед повторным использованием!"));
             return false;
         }
         playerCd.put(id, now + (seconds * 1000L));
@@ -65,7 +68,7 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
         if (loc == null || loc.getWorld() == null) return true;
         String wName = loc.getWorld().getName().toLowerCase();
 
-        // Белый список миров, где РАЗРЕШЕНЫ все 30 артефактов
+        // Белый список миров, где РАЗРЕШЕНЫ предметы
         List<String> allowedWorlds = getConfig().getStringList("allowed-worlds");
         if (allowedWorlds.isEmpty()) {
             allowedWorlds = List.of("world", "world_nether", "world_the_end", "anarchy");
@@ -79,7 +82,7 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
             return true;
         }
 
-        // Проверка привата spawn / hub через Reflection (не требует зависимости WorldGuard при компиляции)
+        // Проверка привата spawn / hub через Reflection
         try {
             if (Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
                 Class<?> wgClass = Class.forName("com.sk89q.worldguard.WorldGuard");
@@ -111,12 +114,11 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        String prefix = color(getConfig().getString("prefix", "&#0055ff&l⚡ &#00E5FF&lMIR-TIME &8» "));
         List<String> list = List.of(args);
 
         if (list.isEmpty()) {
             if (sender instanceof Player p) {
-                ItemRegistry.openCatalog(p, this);
+                ItemRegistry.openGui(p, this);
             } else {
                 sender.sendMessage("Используйте: /mtitems give <игрок> <предмет> [кол-во]");
             }
@@ -124,19 +126,19 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
         }
 
         if (list.get(0).equalsIgnoreCase("gui") && sender instanceof Player p) {
-            ItemRegistry.openCatalog(p, this);
+            ItemRegistry.openGui(p, this);
             return true;
         }
 
         if (!sender.hasPermission("mirtime.items.admin")) {
-            sender.sendMessage(prefix + color("&cНедостаточно прав!"));
+            sender.sendMessage(getPrefix() + color("&cНедостаточно прав!"));
             return true;
         }
 
         if (list.get(0).equalsIgnoreCase("give") && list.size() >= 3) {
             Player target = Bukkit.getPlayer(list.get(1));
             if (target == null) {
-                sender.sendMessage(prefix + color("&cИгрок не в сети!"));
+                sender.sendMessage(getPrefix() + color("&cИгрок не в сети!"));
                 return true;
             }
             String id = list.get(2).toLowerCase();
@@ -145,17 +147,17 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
                 try { amount = Math.max(1, Math.min(64, Integer.parseInt(list.get(3)))); } catch (Exception ignored) {}
             }
 
-            ItemStack item = ItemRegistry.createItem(this, id, amount);
+            ItemStack item = ItemRegistry.getItem(this, id, amount);
             if (item == null) {
-                sender.sendMessage(prefix + color("&cПредмет не найден! Доступны: " + String.join(", ", ItemRegistry.IDS)));
+                sender.sendMessage(getPrefix() + color("&cПредмет не найден!"));
                 return true;
             }
             target.getInventory().addItem(item);
-            sender.sendMessage(prefix + color("&#00FF66Выдан предмет &f" + id + " &7(x" + amount + ") &#00FF66игроку &f" + target.getName()));
+            sender.sendMessage(getPrefix() + color("&#00FF66Выдан предмет &f" + id + " &7(x" + amount + ") &#00FF66игроку &f" + target.getName()));
             return true;
         }
 
-        sender.sendMessage(prefix + color("&fКоманды: &#00FF66/mtitems gui &7или &#00FF66/mtitems give <ник> <id> [кол-во]"));
+        sender.sendMessage(getPrefix() + color("&fКоманды: &#00FF66/mtitems gui &7или &#00FF66/mtitems give <ник> <id> [кол-во]"));
         return true;
     }
 
@@ -163,7 +165,7 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
     public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
         if (args.length == 1) return List.of("gui", "give");
         if (args.length == 2 && args[0].equalsIgnoreCase("give")) return null;
-        if (args.length == 3 && args[0].equalsIgnoreCase("give")) return ItemRegistry.IDS;
+        if (args.length == 3 && args[0].equalsIgnoreCase("give")) return ItemRegistry.getAllIds();
         return List.of();
     }
 
