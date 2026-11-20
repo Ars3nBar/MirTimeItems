@@ -9,12 +9,14 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.Damageable;
@@ -88,11 +90,11 @@ public class ItemMechanics implements Listener {
             }
         }.runTaskTimer(plugin, 20L, 20L);
     }
-
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onInteract(PlayerInteractEvent e) {
+        if (e.getHand() != EquipmentSlot.HAND) return;
         Player p = e.getPlayer();
-        ItemStack is = e.getItem();
+        ItemStack is = p.getInventory().getItemInMainHand();
         String id = getItemId(is);
         if (id == null) return;
 
@@ -115,7 +117,7 @@ public class ItemMechanics implements Listener {
 
         e.setCancelled(true);
         if (plugin.isBlocked(p.getLocation())) {
-            p.sendMessage(MirTimeItems.color(plugin.getPrefix() + "&cЭтот артефакт запрещён на спавне или в мире game!"));
+            p.sendMessage(MirTimeItems.color(plugin.getPrefix() + "&cЭтот артефакт запрещён в мире &f" + p.getWorld().getName() + " &cили на спавне!"));
             p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             p.updateInventory();
             return;
@@ -244,11 +246,11 @@ public class ItemMechanics implements Listener {
             case "totem" -> { if (checkCooldown(p, id, 60)) { consumeOne(p, is); runTotemRitual(p.getLocation()); } }
         }
     }
+
     private void consumeOne(Player p, ItemStack is) {
         is.setAmount(is.getAmount() - 1);
         p.updateInventory();
     }
-
     @EventHandler
     public void onHit(EntityDamageByEntityEvent e) {
         if (!(e.getDamager() instanceof Player attacker) || !(e.getEntity() instanceof LivingEntity victim)) return;
