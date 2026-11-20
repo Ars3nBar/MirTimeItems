@@ -3,6 +3,7 @@ package ru.mirtime.items;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -14,6 +15,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -39,7 +41,7 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
 
         Bukkit.getPluginManager().registerEvents(new ItemMechanics(this), this);
         Bukkit.getPluginManager().registerEvents(this, this);
-        getLogger().info("MirTimeItems v3.0.0 (45 мега-артефактов, белый список миров) запущен!");
+        getLogger().info("MirTimeItems v3.1.0 (65 предметов, многостраничный каталог) запущен!");
     }
 
     public NamespacedKey getItemKey() {
@@ -114,26 +116,76 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
 
         return false;
     }
+    private void openCatalog(Player p, int page) {
+        int perPage = 45;
+        int maxPages = (int) Math.ceil(ItemRegistry.ALL_IDS.size() / (double) perPage);
+        int safePage = Math.max(1, Math.min(page, maxPages));
 
-    private void openCatalog(Player p) {
-        Inventory inv = Bukkit.createInventory(null, 54, color("&#0055ff&l⚡ &#00E5FF&lАРТЕФАКТЫ MIR-TIME (45)"));
-        for (int i = 0; i < ItemRegistry.ALL_IDS.size() && i < 54; i++) {
-            ItemStack item = ItemRegistry.create(itemKey, ItemRegistry.ALL_IDS.get(i), 1);
+        Inventory inv = Bukkit.createInventory(null, 54, color("&#0055ff&l⚡ &#00E5FF&lАРТЕФАКТЫ MIR-TIME &8| &fСтр. " + safePage + "/" + maxPages));
+        int start = (safePage - 1) * perPage;
+
+        for (int i = 0; i < perPage && (start + i) < ItemRegistry.ALL_IDS.size(); i++) {
+            ItemStack item = ItemRegistry.create(itemKey, ItemRegistry.ALL_IDS.get(start + i), 1);
             if (item != null) inv.setItem(i, item);
         }
+
+        // Нижняя панель навигации
+        ItemStack glass = makeNavItem(Material.BLUE_STAINED_GLASS_PANE, "&#0055ff▪");
+        for (int s = 45; s < 54; s++) inv.setItem(s, glass);
+
+        if (safePage > 1) {
+            inv.setItem(47, makeNavItem(Material.ARROW, "&#00E5FF&l◀ Предыдущая страница (" + (safePage - 1) + ")"));
+        }
+        inv.setItem(49, makeNavItem(Material.NETHER_STAR, "&#00FF66&lВсего предметов: " + ItemRegistry.ALL_IDS.size() + " &7(Стр. " + safePage + "/" + maxPages + ")"));
+        if (safePage < maxPages) {
+            inv.setItem(51, makeNavItem(Material.ARROW, "&#00E5FF&lСледующая страница (" + (safePage + 1) + ") ▶"));
+        }
+
         p.openInventory(inv);
+    }
+
+    private ItemStack makeNavItem(Material mat, String title) {
+        ItemStack is = new ItemStack(mat);
+        ItemMeta meta = is.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(color(title));
+            is.setItemMeta(meta);
+        }
+        return is;
     }
 
     @EventHandler
     public void onCatalogClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-        if (!e.getView().getTitle().contains("АРТЕФАКТЫ MIR-TIME")) return;
+        String title = e.getView().getTitle();
+        if (!title.contains("АРТЕФАКТЫ MIR-TIME")) return;
         e.setCancelled(true);
-        if (!p.hasPermission("mirtime.items.admin")) return;
-        ItemStack clicked = e.getCurrentItem();
-        if (clicked != null && !clicked.getType().isAir()) {
-            p.getInventory().addItem(clicked.clone());
-            p.sendMessage(getPrefix() + color("&#00FF66Предмет выдан в инвентарь!"));
+
+        int slot = e.getRawSlot();
+        if (slot < 0 || slot >= 54) return;
+
+        // Определяем текущую страницу из заголовка
+        int currentPage = 1;
+        try {
+            String part = title.substring(title.indexOf("Стр. ") + 5);
+            currentPage = Integer.parseInt(part.split("/")[0].trim());
+        } catch (Exception ignored) {}
+
+        if (slot == 47 && e.getCurrentItem() != null && e.getCurrentItem().getType() == Material.ARROW) {
+            openCatalog(p, currentPage - 1);
+            return;
+        }
+        if (slot == 51 && e.getCurrentItem() != null && e.getCurrentItem().getType() == Material.ARROW) {
+            openCatalog(p, currentPage + 1);
+            return;
+        }
+
+        if (slot < 45 && p.hasPermission("mirtime.items.admin")) {
+            ItemStack clicked = e.getCurrentItem();
+            if (clicked != null && !clicked.getType().isAir()) {
+                p.getInventory().addItem(clicked.clone());
+                p.sendMessage(getPrefix() + color("&#00FF66Предмет выдан в инвентарь!"));
+            }
         }
     }
 
@@ -142,13 +194,13 @@ public class MirTimeItems extends JavaPlugin implements CommandExecutor, TabComp
         List<String> list = List.of(args);
 
         if (list.isEmpty()) {
-            if (sender instanceof Player p) openCatalog(p);
+            if (sender instanceof Player p) openCatalog(p, 1);
             else sender.sendMessage("Используйте: /mtitems give <игрок> <предмет> [кол-во]");
             return true;
         }
 
         if (list.get(0).equalsIgnoreCase("gui") && sender instanceof Player p) {
-            openCatalog(p);
+            openCatalog(p, 1);
             return true;
         }
 
